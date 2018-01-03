@@ -23,6 +23,11 @@ From this directory
 1. `docker_build mor`
 2. `docker_run_link mor main mor1`
 
+## Results
+- Check the `ext/` directory for your output data
+- The `.log` file contains the problem state, the reward function, and the results of each individual of each population.
+- The `.yaml` file contains the parameterws used during training
+- The `.png` files are graphs of the rewards/success per population.
 
 ### Bash command usage
   - `docker_build <TAG>`: Builds a new container with the given tag name
