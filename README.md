@@ -6,8 +6,8 @@ Multi-Objective Robotics
 2. Add the following to your `~/.zshrc` or `~/.bashrc` file (Documentation at bottom)
 ```
 docker_build() { docker build -t $1 .; }
-docker_run() { docker run --name $1 -d -p 4000 $2; }
-docker_run_link() { docker run --name $1 -v $(pwd/data):/$3 -d -p 4000 $4; }
+docker_run() { docker run -it --name $1 -d -p 4000 $2 /bin/bash; }
+docker_run_link() { docker run -it --name $1 -v $(pwd):/$2 -d -p 4000 $3 /bin/bash; }
 docker_inspect() { docker inspect -f "{{json .Mounts}}" $1; }
 docker_stop() { docker container stop $1; }
 docker_exec() { docker exec -t -i $1 /bin/bash; }
@@ -21,7 +21,10 @@ docker_rm_all() { docker rm $(docker ps -a -q); }
 1. Clone this directory
 2. cd `MOR/`
 3. Run `docker_build mor`
-4. Run `docker_run_link mor main mor1`
+4. Run `docker_run_link mor1 main mor`
+5. Run `docker_exec mor1`
+  - Should now be in environment `root@<CONTAINER_ID>:/main#`
+6. Run `python session.py` to run the algorithm in the foreground (append an `&` at the end to run in the background)
 
 ## Results
 - Check the `ext/` directory for your output data
@@ -31,8 +34,8 @@ docker_rm_all() { docker rm $(docker ps -a -q); }
 
 ### Bash command usage
   - `docker_build <TAG>`: Builds a new container with the given tag name
-  - `docker_run <TAG> <NAME>`: Runs the container with the given tag and labels it with the given name
-  - `docker_run_link <TAG> main <NAME>`: Same as run above, but links files between host's working directory and the working directory (`main`) in the container using a docker volume
+  - `docker_run <NAME> <TAG>`: Runs the container with the given tag and labels it with the given name
+  - `docker_run_link <NAME> main <TAG>`: Same as run above, but links files between host's working directory and the working directory (`main`) in the container using a docker volume
   - `docker_inspect <NAME>`: Describes the volume link created by the above command
   - `docker_stop <NAME>`: Pauses the specified docker container
   - `docker_exec <NAME>`: SSH's into the container
