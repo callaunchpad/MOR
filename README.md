@@ -1,6 +1,8 @@
 # MOR
 Multi-Objective Robotics
 
+<img src="http://robomo.club/wp-content/uploads/2016/08/Baxter_1_Large.jpg" alt-text="Baxter Robot" width="350" align="right">
+
 ## Description
 Many real-world problems have conflicting objectives, however, it is difficult to design a single reward function that optimally combines all objectives. To address this, we will simultaneously and independently optimize all solutions on the Pareto front. This project will investigate how to implement and improve the existing MO-CMA-ES algorithm to operate a Baxter robot quickly and adaptively in production for a multi-objective problem such as collision avoidance.
 
