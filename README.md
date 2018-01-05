@@ -26,13 +26,13 @@ docker_rm() { docker rm $1; }
 docker_ls() { docker container ls -a; }
 docker_rm_all() { docker rm $(docker ps -a -q); }
 ```
-3. Clone this directory
 
 ## Run Default NES Algorithm
 *This will run the default NEW Algorithm with the parameters in Config.yaml*
 From this directory
-1. `docker_build mor`
-2. `docker_run_link mor main mor1`
+1. Clone this directory
+2. `docker_build mor`
+3. `docker_run_link mor main mor1`
 
 ## Results
 - Check the `ext/` directory for your output data
