@@ -1,17 +1,6 @@
 # MOR
 Multi-Objective Robotics
 
-## Install ROS Indigo
-- Mac: http://wiki.ros.org/indigo/Installation/OSX/Homebrew/Source
-  - Known Issue for OS versions of El Capitan+:
-    - When installing the following packages:
-
-      `sudo -H pip install -U wstool rosdep rosinstall rosinstall_generator rospkg catkin-pkg Distribute sphinx`
-    - Please add `--ignore-installed python-dateutil` to the end like so:
-
-      `sudo -H pip install -U wstool rosdep rosinstall rosinstall_generator rospkg catkin-pkg Distribute sphinx --ignore-installed python-dateutil`
-- Ubuntu: http://wiki.ros.org/indigo/Installation/Ubuntu
-
 ## Setup Docker
 1. Install [Docker](https://docs.docker.com/engine/installation/) and `docker login`
 2. Add the following to your `~/.zshrc` or `~/.bashrc` file (Documentation at bottom)
