@@ -1,6 +1,9 @@
 # MOR
 Multi-Objective Robotics
 
+## Description
+Many real-world problems have conflicting objectives, however, it is difficult to design a single reward function that optimally combines all objectives. To address this, we will simultaneously and independently optimize all solutions on the Pareto front. This project will investigate how to implement and improve the existing MO-CMA-ES algorithm to operate a Baxter robot quickly and adaptively in production for a multi-objective problem such as collision avoidance.
+
 ## Setup Docker
 1. Install [Docker](https://docs.docker.com/engine/installation/) and `docker login`
 2. Add the following to your `~/.zshrc` or `~/.bashrc` file (Documentation at bottom)
