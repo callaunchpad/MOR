@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from config import Config
 from models import resolve_model
 from rewards import resolve_reward
-from env import Maze, test_cases, resolve_env
+from env import test_cases, resolve_env
 
 
 class NES():

@@ -1,10 +1,8 @@
-import logging
-import numpy as np
-from environments import Maze
+from environments import maze
 
 def resolve_env(name):
 	envs = {
-		"Maze": Maze
+		"Maze": maze.Maze
 	}
 	return envs[name]
 

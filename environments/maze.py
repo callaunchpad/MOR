@@ -1,3 +1,6 @@
+import logging
+import numpy as np
+
 class Maze():
 
 	def __init__(self, matrix):
