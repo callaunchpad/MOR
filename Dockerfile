@@ -1,9 +1,9 @@
 # Use an official Ubuntu runtime as a parent image
-FROM osrf/ros:indigo-desktop-trusty
+FROM osrf/ros:kinetic-desktop-xenial
 
 # install ros packages
-RUN apt-get update && apt-get install -y \
-    ros-indigo-desktop-full=1.1.5-0* \
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    ros-kinetic-desktop-full=1.3.1-0* \
     build-essential \
     curl \
     imagemagick \
@@ -48,5 +48,10 @@ WORKDIR /main
 # Copy the current directory contents into the container at /app
 ADD . /main
 
+RUN rosdep update && \
+	echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc && \
+	/bin/bash -c "source ~/.bashrc"
+
 # Run session.py when the container launches
 # CMD ["python3", "session.py"]
+# CMD [ "gzserver", "--verbose" ]
