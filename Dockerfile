@@ -19,7 +19,9 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
     # python3-tk \
     rsync \
     software-properties-common \
-    unzip
+    unzip \
+    vim \
+    wget
 
 RUN apt-get remove python-numpy -y && \
     apt-get clean \
@@ -44,9 +46,24 @@ RUN pip --no-cache-dir install \
         tensorflow
 
 WORKDIR /main
-
 # Copy the current directory contents into the container at /app
 ADD . /main
+
+
+RUN rm /var/lib/dpkg/statoverride
+
+RUN sh -c 'echo "deb http://packages.osrfoundation.org/gazebo/ubuntu-stable `lsb_release -cs` main" > /etc/apt/sources.list.d/gazebo-stable.list'
+RUN wget http://packages.osrfoundation.org/gazebo.key -O - | apt-key add -
+RUN apt-get update
+RUN apt-get install --no-install-recommends -y \
+	ros-kinetic-gazebo8-ros \
+	ros-kinetic-gazebo8-ros-pkgs \
+	ros-kinetic-gazebo8-ros-control
+# RUN apt-get install ros-kinetic-gazebo-ros  --no-install-recommends -y \
+# 		ros-kinetic-gazebo-ros-pkgs \
+# 		ros-kinetic-gazebo-ros-control && \
+# 	apt-get remove gazebo7 --no-install-recommends -y && \
+# 	curl -ssL http://get.gazebosim.org | sh
 
 RUN rosdep update && \
 	echo "source /opt/ros/kinetic/setup.bash" >> ~/.bashrc && \
@@ -54,4 +71,4 @@ RUN rosdep update && \
 
 # Run session.py when the container launches
 # CMD ["python3", "session.py"]
-# CMD [ "gzserver", "--verbose" ]
+# CMD [ "gzserver", "--verbose &" ]
