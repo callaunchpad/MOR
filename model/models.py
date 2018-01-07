@@ -1,18 +1,17 @@
 import numpy as np
 import tensorflow as tf
-from cfg.config import Config
 from activations import Activations
 
 def resolve_model(name):
 	models = {
 		"FeedForwardNeuralNetwork": FeedForwardNeuralNetwork
 	}
-	return models[name]()
+	return models[name]
 
 class FeedForwardNeuralNetwork():
 
-	def __init__(self):
-		self.config = Config().config
+	def __init__(self, config):
+		self.config = config
 		self.activations = Activations()
 		self.inputs = tf.placeholder(tf.float32, shape=(1, self.config['input_size']))
 		params_size = (self.config['input_size'] * self.config['n_nodes_per_layer']) + self.config['n_nodes_per_layer'] + self.config['n_hidden_layers'] * (self.config['n_nodes_per_layer']**2 + self.config['n_nodes_per_layer']) + (self.config['n_nodes_per_layer'] * self.config['output_size']) + self.config['output_size']
@@ -42,7 +41,7 @@ class FeedForwardNeuralNetwork():
 		start += self.config['n_nodes_per_layer'] * self.config['output_size']
 		biases = tf.reshape(self.params[start : start + self.config['output_size']], [self.config['output_size']])
 		start += self.config['output_size']
-		output_layer = self.activations.resolve_activation(self.config['output_activation'])(tf.add(tf.matmul(hidden_layer, weights), biases))
+		output_layer = tf.scalar_mul(self.config['output_scale'], self.activations.resolve_activation(self.config['output_activation'])(tf.add(tf.matmul(hidden_layer, weights), biases)))
 		return output_layer
 
 	def init_master_params(self):

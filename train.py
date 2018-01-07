@@ -7,6 +7,7 @@ import numpy as np
 import tensorflow as tf
 from shutil import copyfile, rmtree
 from datetime import datetime
+from cfg.config import Config
 from algorithms.NES import NES
 
 def config(log_file):
@@ -19,6 +20,7 @@ def set_seeds(seed):
 
 def get_args():
 	parser = argparse.ArgumentParser(description="Flags to toggle options")
+	parser.add_argument('config', nargs='?', default="cfg/Config.yaml", help='Config file specified from the cfg/ directory. Usage: `python train.py <FILENAME>.yaml`')
 	parser.add_argument('-d', action='store_true', default=False, help='Debug flag, Delete log after training is finished.')
 	return parser.parse_args()
 
@@ -32,15 +34,24 @@ def create_training_contents():
 	log_file = training_directory + timestamp + '.log'
 	return training_directory, log_file, timestamp
 
+def get_config_file():
+	if not args.config:
+		raise Exception("Config file not specified. Please specify a file from the cfg/ directory. Usage: `python train.py <FILENAME>.yaml`")
+	config_path = "cfg/" + sys.argv[1]
+	if not os.path.exists(config_path):
+		raise Exception("Config file not found in cfg/ directory. Usage: `python train.py <FILENAME>.yaml`")
+	return config_path
+
 if __name__ == "__main__":
 	args = get_args()
 	training_directory, log_file, timestamp = create_training_contents()
 	config(log_file)
-	copyfile("cfg/Config.yaml", training_directory + timestamp + ".yaml")
+	config_path = get_config_file()
+	copyfile(config_path, training_directory + timestamp + ".yaml")
 
 	try:
 		set_seeds(0)
-		algorithm = NES(training_directory)
+		algorithm = NES(training_directory, Config(config_path).config)
 		print("Running NES Algorithm...")
 		print("Check {} for progress".format(log_file))
 		algorithm.run()

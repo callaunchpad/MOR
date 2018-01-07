@@ -1,9 +1,12 @@
 import numpy as np
 import logging
+from abstract import Environment
 
-class Maze():
+class Maze(Environment):
 
-	def __init__(self, matrix):
+	def __init__(self, matrix, training_directory):
+		self.discrete = True
+		self.training_directory = training_directory
 		self.walls = []
 		self.empty = []
 		self.start = (0,0)
@@ -21,7 +24,6 @@ class Maze():
 				else:
 					self.empty.append((i, j))
 		self.current = self.start
-		self.discrete = True
 		logging.info("Maze: Target at {}".format(self.target))
 		logging.info(np.asmatrix(self.map))
 
@@ -105,14 +107,15 @@ class Maze():
 				x_next = current_position[0]
 			return (x_next, current_position[1])
 
-	def act(self, direction):
+	def act(self, direction, population, master):
 		"""
 		Move current position coordinate in the given direction.
 		"""
+		success = True
 		past = self.current
 		self.current = self.next(self.current, direction)
 		logging.info("Action: {}, Current Position: {}".format(self.direction_name(direction), self.current))
-		return self.current != past
+		return success
 
 	def is_wall(self, current_position, direction):
 		"""
@@ -145,10 +148,31 @@ class Maze():
 			return 0
 
 	def inputs(self, t):
+		"""
+		Return the inputs for the neural network
+		"""
 		inputs = [self.current[0], self.current[1], self.target[0], self.target[1], self.is_wall(self.current, 0), self.is_wall(self.current, 1), self.is_wall(self.current, 2), self.is_wall(self.current, 3), t+1]
 		return inputs
 
-	def reward_params(self, moved):
-		params = [self.current, self.target, moved]
+	def reward_params(self, success):
+		"""
+		Return the parameters for the proposed reward function
+		"""
+		params = [self.current, self.target, success]
 		return params
+
+	def pre_processing(self):
+		"""
+		Complete any pre processing tasks
+		"""
+		if not self.solution_exists():
+			raise Exception("No solution exists for the given environment.")
+		else:
+			print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
+
+	def post_processing(self):
+		"""
+		Complete any pending post processing tasks
+		"""
+		pass
 

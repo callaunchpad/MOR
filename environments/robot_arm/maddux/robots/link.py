@@ -3,7 +3,7 @@ A Link object holds all information related to a robot link such as
 the DH parameters and position in relation to the world.
 """
 import numpy as np
-from maddux.plot import plot_sphere
+from ..plot import plot_sphere
 import math
 
 

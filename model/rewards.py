@@ -1,8 +1,10 @@
 import math
+import numpy as np
 
 def resolve_reward(name):
 	rewards = {
 		"manhattan_distance": manhattan_distance,
+		"euclidean_distance": euclidean_distance,
 		"binary": binary
 	}
 	return rewards[name]
@@ -16,13 +18,23 @@ def manhattan_distance(params):
 	Returns:
 		(float): Manhattan distance from current position to target
 	"""
-	current, target, moved = params
+	current, target, success = params
+	if not success:
+		return -100
 	dist = abs(target[0] - current[0]) + abs(target[1] - current[1])
 	target_reached = dist == 0
-	return -dist + (100 * target_reached) + (10 * moved) - (10 * (not moved))
+	return -dist + (100 * target_reached)
+
+def euclidean_distance(params):
+	current, target, success = params
+	if not success:
+		return -100
+	return -np.linalg.norm(current - target)
 
 def binary(params):
-	current, target, moved = params
+	current, target, success = params
+	if not success:
+		return -100
 	if current == target:
 		return 1
 	return -1

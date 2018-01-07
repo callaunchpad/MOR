@@ -1,49 +1,87 @@
-# import numpy as np
-# from maddux.objects import Obstacle, Ball
-# from maddux.environment import Environment
-# from maddux.robots import simple_human_arm
-
-# obstacles = [Obstacle([1, 2, 1], [2, 2.5, 1.5]),
-#              Obstacle([3, 2, 1], [4, 2.5, 1.5])]
-# ball = Ball([2.5, 2.5, 2.0], 0.25)
-
-# q0 = np.array([0, 0, 0, np.pi / 2, 0, 0, 0])
-# human_arm = simple_human_arm(2.0, 2.0, q0, np.array([3.0, 1.0, 0.0]))
-
-# env = Environment(dimensions=[10.0, 10.0, 20.0],
-#                   dynamic_objects=[ball],
-#                   static_objects=obstacles,
-#                   robot=human_arm)
-
-# q_new = human_arm.ikine(ball.position)
-# human_arm.update_angles(q_new)
-# env.plot()
-
 import numpy as np
+import logging
+import os, errno
+from datetime import datetime
+from ..abstract import Environment
 from maddux.environment import Environment
 from maddux.objects import Ball
 from maddux.robots import simple_human_arm
 
-def arm_animation():
-    """Animate the arm moving to touch a ball"""
+class RobotArm(Environment):
 
-    # Declare a human arm
-    q0 = np.array([0.5, 0.2, 0, 0.5, 1.5])
-    human_arm = simple_human_arm(2.0, 2.0, q0, np.array([2.0, 2.0, 0.0]))
-    
-    # Create a ball as our target
-    ball = Ball(np.array([3.0, 2.0, 3.0]), 0.15, target=True)
-    
-    # Create our environment
-    env = Environment([5.0, 5.0, 5.0], dynamic_objects=[ball],
-                      robot=human_arm)
-    
-    # Run inverse kinematics to find a joint config that lets arm touch ball
-    human_arm.ikine(ball.position)
-    # human_arm.save_path("../../ext/tutorial_path.npy")
-    
-    # Animate
-    env.animate(duration=5.0, save_path="../../ext/tutorial.mp4")
+	def __init__(self, env, training_directory):
+		self.discrete = False
+		self.training_directory = training_directory
+		self.env = env
+		self.arm = self.env.robot
+		self.current = self.arm.end_effector_position()
+		self.ball = self.env.dynamic_objects[0]
+		self.target = self.ball.position
+		# self.recording_queue = []
+		logging.info("Robot Arm: End effector starts at {}".format(self.current))
+		logging.info("Target: Ball at {}".format(self.target))
 
-if __name__ == '__main__':
-    arm_animation()
+	def reset(self):
+		"""
+		Reset current position to beginning.
+		"""
+		self.arm.reset()
+		self.current = self.arm.end_effector_position()
+
+	def act(self, location, population, master):
+		"""
+		Move end effector to the given location
+		"""
+		success = True
+		past = self.current
+		self.current = location[0]
+		if population % 100 == 0 and master:
+			try:
+				self.arm.ikine(location[0])
+				timestamp = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
+				training_path = self.training_directory + "/paths/"
+				try:
+				    os.makedirs(training_path)
+				except OSError as e:
+				    if e.errno != errno.EEXIST:
+				        raise
+				record_path = training_path + "pop_" + population + ".npy"
+				video_path = training_path + "pop_" + population + ".mp4"
+				self.arm.save_path(record_path)
+				self.env.animate(duration=5.0, save_path=video_path)
+				# self.recording_queue.append(record_path)
+			except ValueError as e:
+				success = False
+				logging.warn("Could not solve IK for position: {}". format(location[0]))
+		logging.info("Current Position: {}".format(self.current))
+		return success
+
+	def inputs(self, t):
+		"""
+		Return the inputs for the neural network
+		"""
+		inputs = [self.current[0], self.current[1], self.current[2], self.target[0], self.target[1], self.target[2], t+1]
+		return inputs
+
+	def reward_params(self, success):
+		"""
+		Return the parameters for the proposed reward function
+		"""
+		params = [self.current, self.target, success]
+		return params
+
+	def pre_processing(self):
+		"""
+		Complete any pending post processing tasks
+		"""
+		pass
+
+	def post_processing(self):
+		"""
+		Complete any pending post processing tasks
+		"""
+		# logging.debug("Recording Videos")
+		# for path in self.recording_queue:
+		# 	self.env.animate(duration=5.0, save_path=path)
+		# logging.debug("Completed recording all videos")
+		pass

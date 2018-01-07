@@ -11,6 +11,7 @@ default_config:
   reward: "binary"
   hidden_layer_activation: "selu"
   output_activation: "none"
+  output_scale: 1
 
   n_hidden_layers: 1
   n_nodes_per_layer: 10

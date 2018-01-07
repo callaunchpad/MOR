@@ -6,7 +6,6 @@ import tensorflow as tf
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from cfg.config import Config
 from model.models import resolve_model
 from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
@@ -17,21 +16,18 @@ class NES():
 	Implementation of NES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
 	"""
 
-	def __init__(self, training_directory):
-		self.config = Config().config
+	def __init__(self, training_directory, config):
+		self.config = config
 		self.training_directory = training_directory
-		self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']])
-		if not self.env.solution_exists():
-			raise Exception("No solution exists for the given environment.")
-		else:
-			print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
-		self.model = resolve_model(self.config['model'])
+		self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory)
+		self.env.pre_processing()
+		self.model = resolve_model(self.config['model'])(self.config)
 		self.reward = resolve_reward(self.config['reward'])
 		self.master_params = self.model.init_master_params()
 		logging.info("\nReward:")
 		logging.info(inspect.getsource(self.reward) + "\n")
 
-	def run_simulation(self, sample_params, model):
+	def run_simulation(self, sample_params, model, population, master=False):
 		"""
 		Black box interaction with environment using model as the action decider given environmental inputs.
 		Args:
@@ -42,15 +38,15 @@ class NES():
 		"""
 		with tf.Session() as sess:
 			reward = 0
-			moved = False
+			success = False
 			for t in range(self.config['n_timesteps_per_trajectory']):
 				inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
 				net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
 				action = net_output
 				if self.env.discrete:
 					action = np.argmax(net_output)
-				moved = self.env.act(action)
-			reward += self.reward(self.env.reward_params(moved))
+				success = self.env.act(action, population, master)
+			reward += self.reward(self.env.reward_params(success))
 			self.env.reset()
 			return reward
 
@@ -78,16 +74,18 @@ class NES():
 			noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
 			rewards = np.zeros(self.config['n_individuals'])
 			n_individual_target_reached = 0
+			self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
 			for i in range(self.config['n_individuals']):
 				logging.info("Individual: {}".format(i+1))
 				sample_params = self.master_params + noise_samples[i]
-				rewards[i] = self.run_simulation(sample_params, model)
+				rewards[i] = self.run_simulation(sample_params, model, p)
 				n_individual_target_reached += rewards[i] == 1
 				logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
 			self.update(noise_samples, rewards)
 			n_reached_target.append(n_individual_target_reached)
 			population_rewards.append(sum(rewards)/len(rewards))
 			self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
+		self.env.post_processing()
 		logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
 
 	def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
