@@ -1,6 +1,6 @@
 import logging
 import numpy as np
-from environments import Maze
+from maze import Maze
 
 def resolve_env(name):
 	envs = {

@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from config import Config
+from cfg.config import Config
 from activations import Activations
 
 def resolve_model(name):

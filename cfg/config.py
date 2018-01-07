@@ -2,9 +2,9 @@ import yaml
 
 class Config():
 
-	def __init__(self, filename = 'Config.yaml'):
+	def __init__(self, filename = 'cfg/Config.yaml'):
 		custom_config = yaml.load(open(filename, 'r'))["config"]
-		default_config = yaml.load(open('Default.yaml', 'r'))["default_config"]
+		default_config = yaml.load(open('cfg/Default.yaml', 'r'))["default_config"]
 		self.config = self.resolve_config(default_config, custom_config)
 
 	def resolve_config(self, default_config, custom_config):

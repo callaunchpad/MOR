@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 from shutil import copyfile, rmtree
 from datetime import datetime
-from algorithm import NES
+from algorithms.NES import NES
 
 def config(log_file):
 	logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(message)s')
@@ -36,7 +36,7 @@ if __name__ == "__main__":
 	args = get_args()
 	training_directory, log_file, timestamp = create_training_contents()
 	config(log_file)
-	copyfile("Config.yaml", training_directory + timestamp + ".yaml")
+	copyfile("cfg/Config.yaml", training_directory + timestamp + ".yaml")
 
 	try:
 		set_seeds(0)

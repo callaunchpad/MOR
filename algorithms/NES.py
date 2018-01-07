@@ -6,10 +6,10 @@ import tensorflow as tf
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-from config import Config
-from models import resolve_model
-from rewards import resolve_reward
-from env import Maze, test_cases, resolve_env
+from cfg.config import Config
+from model.models import resolve_model
+from model.rewards import resolve_reward
+from environments.env import test_cases, resolve_env
 
 
 class NES():
