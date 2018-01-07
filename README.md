@@ -22,7 +22,9 @@ Many real-world problems have conflicting objectives, however, it is difficult t
 *In the docker container*
 1. Run `gzserver --verbose &`
 2. Copy the `IP` from the display messageL `[Msg] Publicized address: <IP>`
+
 *In the local terminal*
+
 3. Run `gzconnect <NAME> <IP>` where `<NAME>` is the name of your container and `<IP>` is from step 2.
 
 ## Results
