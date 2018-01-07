@@ -21,6 +21,7 @@ class Maze():
 				else:
 					self.empty.append((i, j))
 		self.current = self.start
+		self.discrete = True
 		logging.info("Maze: Target at {}".format(self.target))
 		logging.info(np.asmatrix(self.map))
 
@@ -104,12 +105,13 @@ class Maze():
 				x_next = current_position[0]
 			return (x_next, current_position[1])
 
-	def move(self, direction):
+	def act(self, direction):
 		"""
 		Move current position coordinate in the given direction.
 		"""
 		past = self.current
 		self.current = self.next(self.current, direction)
+		logging.info("Action: {}, Current Position: {}".format(self.direction_name(direction), self.current))
 		return self.current != past
 
 	def is_wall(self, current_position, direction):
@@ -141,3 +143,12 @@ class Maze():
 			if x_next >= self.boundaries[0] or self.map_location(x_next, current_position[1]) == 1:
 				return 1
 			return 0
+
+	def inputs(self, t):
+		inputs = [self.current[0], self.current[1], self.target[0], self.target[1], self.is_wall(self.current, 0), self.is_wall(self.current, 1), self.is_wall(self.current, 2), self.is_wall(self.current, 3), t+1]
+		return inputs
+
+	def reward_params(self, moved):
+		params = [self.current, self.target, moved]
+		return params
+

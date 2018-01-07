@@ -44,12 +44,13 @@ class NES():
 			reward = 0
 			moved = False
 			for t in range(self.config['n_timesteps_per_trajectory']):
-				inputs = np.array([self.env.current[0], self.env.current[1], self.env.target[0], self.env.target[1], self.env.is_wall(self.env.current, 0), self.env.is_wall(self.env.current, 1), self.env.is_wall(self.env.current, 2), self.env.is_wall(self.env.current, 3), t+1]).reshape((1, self.config['input_size']))
-				action_dist = sess.run(model, self.model.feed_dict(inputs, sample_params))
-				direction = np.argmax(action_dist)
-				moved = self.env.move(direction)
-				logging.info("Action: {}, Current Position: {}".format(self.env.direction_name(direction), self.env.current))
-			reward += self.reward(self.env.current, self.env.target, moved)
+				inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
+				net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
+				action = net_output
+				if self.env.discrete:
+					action = np.argmax(net_output)
+				moved = self.env.act(action)
+			reward += self.reward(self.env.reward_params(moved))
 			self.env.reset()
 			return reward
 
