@@ -46,11 +46,11 @@ class RobotArm(Environment):
 				except OSError as e:
 				    if e.errno != errno.EEXIST:
 				        raise
-				record_path = training_path + "pop_" + population + ".npy"
-				video_path = training_path + "pop_" + population + ".mp4"
+				record_path = training_path + "pop_" + str(population) + ".npy"
+				video_path = training_path + "pop_" + str(population) + ".mp4"
 				self.arm.save_path(record_path)
 				self.env.animate(duration=5.0, save_path=video_path)
-				np.save(training_path + "net_" + population, params)
+				np.save(training_path + "net_" + str(population), params)
 				# self.recording_queue.append(record_path)
 			except ValueError as e:
 				valid = False
