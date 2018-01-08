@@ -24,6 +24,8 @@ class NES():
 		self.model = resolve_model(self.config['model'])(self.config)
 		self.reward = resolve_reward(self.config['reward'])
 		self.master_params = self.model.init_master_params()
+		self.learning_rate = self.config['learning_rate']
+		self.noise_std_dev = self.config['noise_std_dev']
 		logging.info("\nReward:")
 		logging.info(inspect.getsource(self.reward) + "\n")
 
@@ -51,7 +53,7 @@ class NES():
 			self.env.reset()
 			return reward, success
 
-	def update(self, noise_samples, rewards):
+	def update(self, noise_samples, rewards, n_individual_target_reached):
 		"""
 		Update function for the master parameters (weights and biases for neural network)
 		Args:
@@ -61,7 +63,16 @@ class NES():
 		normalized_rewards = (rewards - np.mean(rewards))
 		if np.std(rewards) != 0.0:
 			normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-		self.master_params += (self.config['learning_rate'] / (self.config['n_individuals'] * self.config['noise_std_dev'])) * np.dot(noise_samples.T, normalized_rewards)
+
+		learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
+		noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
+		logging.info("Decay: {}".format(1.0 - decay_rate))
+		self.learning_rate = learning_decay_rate * self.config['learning_rate']
+		self.noise_std_dev *= decay_rate
+		logging.info("Learning Rate: {}".format(self.learning_rate))
+		logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+
+		self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)
 
 	def run(self):
 		"""
@@ -82,7 +93,7 @@ class NES():
 				rewards[i], success = self.run_simulation(sample_params, model, p)
 				n_individual_target_reached += success
 				logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
-			self.update(noise_samples, rewards)
+			self.update(noise_samples, rewards, n_individual_target_reached)
 			n_reached_target.append(n_individual_target_reached)
 			population_rewards.append(sum(rewards)/len(rewards))
 			self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])

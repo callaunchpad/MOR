@@ -89,4 +89,4 @@ class RobotArm(Environment):
 		pass
 
 	def reached_target(self):
-		return np.linalg.norm(self.current - self.target) < 0.01
+		return np.linalg.norm(self.current - self.target) < 3
