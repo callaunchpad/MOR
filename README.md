@@ -17,10 +17,10 @@ Many real-world problems have conflicting objectives, however, it is difficult t
 1. Clone this directory
 2. cd `MOR/`
 3. Run `python train <CONFIG_FILENAME>.yaml` to run the algorithm in the foreground (append an `&` at the end to run in the background)
-  - Use `<CONFIG_FILENAME> = "Config"` to run the default Maze example
-  - Check other config files in `cfg/` for other options, or write your own `.yaml` config file and add it to `cfg/`.
-  - Resolve any dependecy issues that may arise
-    - Linux/Mac OSX: `sudo -H pip install numpy tensorflow matplotlib pyyaml`
+    - Use `<CONFIG_FILENAME> = "Config"` to run the default Maze example
+    - Check other config files in `cfg/` for other options, or write your own `.yaml` config file and add it to `cfg/`.
+    - Resolve any dependecy issues that may arise
+      - Linux/Mac OSX: `sudo -H pip install numpy tensorflow matplotlib pyyaml`
 
 #### Docker Container (Recommended)
 1. Clone this directory
@@ -28,8 +28,8 @@ Many real-world problems have conflicting objectives, however, it is difficult t
 3. Run `docker_build mor`
 4. Run `docker_run_link_gazebo mor1 main mor`
 5. Run `python train <CONFIG_FILENAME>.yaml` to run the algorithm in the foreground (append an `&` at the end to run in the background)
-  - Use `<CONFIG_FILENAME> = "Config"` to run the default Maze example
-  - Check other config files in `cfg/` for other options, or write your own `.yaml` config file and add it to `cfg/`.
+    - Use `<CONFIG_FILENAME> = "Config"` to run the default Maze example
+    - Check other config files in `cfg/` for other options, or write your own `.yaml` config file and add it to `cfg/`.
 
 ## Results
 - Check the `ext/` directory for your output data
@@ -41,6 +41,7 @@ Many real-world problems have conflicting objectives, however, it is difficult t
   - `docker_build <TAG>`: Builds a new container with the given tag name
   - `docker_run <NAME> <TAG>`: Runs the container with the given tag and labels it with the given name
   - `docker_run_link <NAME> main <TAG>`: Same as run above, but links files between host's working directory and the working directory (`main`) in the container using a docker volume
+  - `docker_run_link_gazebo <NAME> main <TAG>`: Same as above, but with Gazebo enabled between remote and local hosts.
   - `docker_inspect <NAME>`: Describes the volume link created by the above command
   - `docker_stop <NAME>`: Pauses the specified docker container
   - `docker_exec <NAME>`: SSH's into the container
