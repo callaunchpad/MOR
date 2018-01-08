@@ -40,7 +40,7 @@ class RobotArm(Environment):
 			try:
 				self.arm.ikine(location[0])
 				timestamp = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
-				training_path = self.training_directory + "/paths/"
+				training_path = self.training_directory + "/records/"
 				try:
 				    os.makedirs(training_path)
 				except OSError as e:
