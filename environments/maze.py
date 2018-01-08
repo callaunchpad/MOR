@@ -4,9 +4,10 @@ from abstract import Environment
 
 class Maze(Environment):
 
-	def __init__(self, matrix, training_directory):
+	def __init__(self, matrix, training_directory, config):
 		self.discrete = True
 		self.training_directory = training_directory
+		self.config = config
 		self.walls = []
 		self.empty = []
 		self.start = (0,0)
@@ -107,15 +108,15 @@ class Maze(Environment):
 				x_next = current_position[0]
 			return (x_next, current_position[1])
 
-	def act(self, direction, population, master):
+	def act(self, direction, population, params, master):
 		"""
 		Move current position coordinate in the given direction.
 		"""
-		success = True
+		valid = True
 		past = self.current
 		self.current = self.next(self.current, direction)
 		logging.info("Action: {}, Current Position: {}".format(self.direction_name(direction), self.current))
-		return success
+		return valid
 
 	def is_wall(self, current_position, direction):
 		"""
@@ -154,11 +155,11 @@ class Maze(Environment):
 		inputs = [self.current[0], self.current[1], self.target[0], self.target[1], self.is_wall(self.current, 0), self.is_wall(self.current, 1), self.is_wall(self.current, 2), self.is_wall(self.current, 3), t+1]
 		return inputs
 
-	def reward_params(self, success):
+	def reward_params(self, valid):
 		"""
 		Return the parameters for the proposed reward function
 		"""
-		params = [self.current, self.target, success]
+		params = [self.current, self.target, valid]
 		return params
 
 	def pre_processing(self):
@@ -176,3 +177,5 @@ class Maze(Environment):
 		"""
 		pass
 
+	def reached_target(self):
+		return self.current == self.target

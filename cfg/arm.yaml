@@ -4,6 +4,7 @@ config:
   n_populations: 1000
   n_individuals: 100
   n_timesteps_per_trajectory: 1
+  record_iterations: 50
 
   environment: "RobotArm"
   environment_index: 0

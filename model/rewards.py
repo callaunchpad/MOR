@@ -18,22 +18,22 @@ def manhattan_distance(params):
 	Returns:
 		(float): Manhattan distance from current position to target
 	"""
-	current, target, success = params
-	if not success:
+	current, target, solution = params
+	if not solution:
 		return -100
 	dist = abs(target[0] - current[0]) + abs(target[1] - current[1])
 	target_reached = dist == 0
 	return -dist + (100 * target_reached)
 
 def euclidean_distance(params):
-	current, target, success = params
-	if not success:
+	current, target, solution = params
+	if not solution:
 		return -100
 	return -np.linalg.norm(current - target)
 
 def binary(params):
-	current, target, success = params
-	if not success:
+	current, target, solution = params
+	if not solution:
 		return -100
 	if current == target:
 		return 1

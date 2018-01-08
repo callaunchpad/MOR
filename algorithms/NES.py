@@ -19,7 +19,7 @@ class NES():
 	def __init__(self, training_directory, config):
 		self.config = config
 		self.training_directory = training_directory
-		self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory)
+		self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
 		self.env.pre_processing()
 		self.model = resolve_model(self.config['model'])(self.config)
 		self.reward = resolve_reward(self.config['reward'])
@@ -38,17 +38,18 @@ class NES():
 		"""
 		with tf.Session() as sess:
 			reward = 0
-			success = False
+			valid = False
 			for t in range(self.config['n_timesteps_per_trajectory']):
 				inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
 				net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
 				action = net_output
 				if self.env.discrete:
 					action = np.argmax(net_output)
-				success = self.env.act(action, population, master)
-			reward += self.reward(self.env.reward_params(success))
+				valid = self.env.act(action, population, sample_params, master)
+			reward += self.reward(self.env.reward_params(valid))
+			success = self.env.reached_target()
 			self.env.reset()
-			return reward
+			return reward, success
 
 	def update(self, noise_samples, rewards):
 		"""
@@ -78,8 +79,8 @@ class NES():
 			for i in range(self.config['n_individuals']):
 				logging.info("Individual: {}".format(i+1))
 				sample_params = self.master_params + noise_samples[i]
-				rewards[i] = self.run_simulation(sample_params, model, p)
-				n_individual_target_reached += rewards[i] == 1
+				rewards[i], success = self.run_simulation(sample_params, model, p)
+				n_individual_target_reached += success
 				logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
 			self.update(noise_samples, rewards)
 			n_reached_target.append(n_individual_target_reached)

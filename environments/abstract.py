@@ -14,7 +14,7 @@ class Environment():
 		pass
 
 	@abstractmethod
-	def act(self, action, population, master):
+	def act(self, action, population, params, master):
 		"""
 		Move end effector to the given location
 		"""
@@ -45,5 +45,12 @@ class Environment():
 	def post_processing(self):
 		"""
 		Complete any pending post processing tasks
+		"""
+		pass
+
+	@abstractmethod
+	def reached_target(self):
+		"""
+		Check if the target goal was achieved
 		"""
 		pass

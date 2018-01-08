@@ -9,9 +9,10 @@ from maddux.robots import simple_human_arm
 
 class RobotArm(Environment):
 
-	def __init__(self, env, training_directory):
+	def __init__(self, env, training_directory, config):
 		self.discrete = False
 		self.training_directory = training_directory
+		self.config = config
 		self.env = env
 		self.arm = self.env.robot
 		self.current = self.arm.end_effector_position()
@@ -28,14 +29,14 @@ class RobotArm(Environment):
 		self.arm.reset()
 		self.current = self.arm.end_effector_position()
 
-	def act(self, location, population, master):
+	def act(self, location, population, params, master):
 		"""
 		Move end effector to the given location
 		"""
-		success = True
+		valid = True
 		past = self.current
 		self.current = location[0]
-		if population % 100 == 0 and master:
+		if population % self.config['record_iterations'] == 0 and master:
 			try:
 				self.arm.ikine(location[0])
 				timestamp = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
@@ -49,12 +50,13 @@ class RobotArm(Environment):
 				video_path = training_path + "pop_" + population + ".mp4"
 				self.arm.save_path(record_path)
 				self.env.animate(duration=5.0, save_path=video_path)
+				np.save(training_path + "net_" + population, params)
 				# self.recording_queue.append(record_path)
 			except ValueError as e:
-				success = False
+				valid = False
 				logging.warn("Could not solve IK for position: {}". format(location[0]))
 		logging.info("Current Position: {}".format(self.current))
-		return success
+		return valid
 
 	def inputs(self, t):
 		"""
@@ -63,11 +65,11 @@ class RobotArm(Environment):
 		inputs = [self.current[0], self.current[1], self.current[2], self.target[0], self.target[1], self.target[2], t+1]
 		return inputs
 
-	def reward_params(self, success):
+	def reward_params(self, valid):
 		"""
 		Return the parameters for the proposed reward function
 		"""
-		params = [self.current, self.target, success]
+		params = [self.current, self.target, valid]
 		return params
 
 	def pre_processing(self):
@@ -85,3 +87,6 @@ class RobotArm(Environment):
 		# 	self.env.animate(duration=5.0, save_path=path)
 		# logging.debug("Completed recording all videos")
 		pass
+
+	def reached_target(self):
+		return np.linalg.norm(self.current - self.target) < 0.01
