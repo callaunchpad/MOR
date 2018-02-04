@@ -39,6 +39,7 @@ class Environment:
         self.static_objects = static_objects if static_objects else []
         self.robot = robot
 
+
     def run(self, duration):
         """Run for a certain duration
 

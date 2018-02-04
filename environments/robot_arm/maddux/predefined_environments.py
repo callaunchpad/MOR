@@ -2,11 +2,23 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath('.'))
 
-from robots import simple_human_arm, noodle_arm
+from robots import simple_human_arm, simple_3dof_arm, noodle_arm
 from environment import Environment
 from objects import Ball, Obstacle, Target
 import numpy as np
 
+def get_empty_3dof_environment():
+    """An easy difficulty environment for planning tests with two obstacles,
+    a ball as a target, and a simple human arm.
+    """
+    obstacles = []
+    ball = Ball([2.5, 2.5, 2.0], 0.25, target=True)
+    q = np.array([0, 0, 0, np.pi / 2, 0, 0, 0])
+    robot = simple_3dof_arm(2.0, 2.0, 2.0, q, np.array([3.0, 1.0, 0.0]))
+
+    return Environment(dynamic_objects=[ball],
+                       static_objects=obstacles,
+                       robot=robot)
 
 def get_easy_3dof_environment():
     """An easy difficulty environment for planning tests with two obstacles,
@@ -16,7 +28,7 @@ def get_easy_3dof_environment():
                  Obstacle([3, 2, 1], [4, 2.5, 1.5])]
     ball = Ball([2.5, 2.5, 2.0], 0.25, target=True)
     q = np.array([0, 0, 0, np.pi / 2, 0, 0, 0])
-    robot = simple_human_arm(2.0, 2.0, q, np.array([3.0, 1.0, 0.0]))
+    robot = simple_3dof_arm(2.0, 2.0, 2.0, q, np.array([3.0, 1.0, 0.0]))
 
     return Environment(dynamic_objects=[ball],
                        static_objects=obstacles,

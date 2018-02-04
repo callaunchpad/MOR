@@ -34,6 +34,37 @@ def simple_human_arm(seg1_len, seg2_len, q0, base=None):
     robot = Arm(links, q0, 'simple_human_arm', 4, base)
     return robot
 
+def simple_3dof_arm(seg1_len, seg2_len, seg3_len, q0, base=None):
+    """Creates a simple human-like robotic arm with 7 links and 2 segments
+    with the desired lengths and starting joint configuration
+
+    :param seg1_len: The length of the first segment of the arm
+    :type seg1_len: int
+
+    :param seg2_len: The length of the second segment of the arm
+    :type seg2_len: int
+
+    :param q0: 1xN vector of the starting joint configuration
+    :type q0: numpy.ndarray
+
+    :param base: (Optional) (x, y, z) location of arm base
+    :type base: numpy.ndarray or None
+
+    :returns: 7 link, 2 segment "human" arm.
+    :rtype: maddux.robot.Arm
+    """
+    L1 = Link(0, 0, 0, 1.571)
+    L2 = Link(0, 0, 0, -1.571)
+    L3 = Link(0, seg1_len, 0, -1.571)
+    L4 = Link(0, seg2_len, 0, -1.571)
+    L5 = Link(0, 0, seg3_len, -1.571)
+    L6 = Link(0, 0, 0, 1.571)
+    L7 = Link(0, 0, 0, 1.571)
+    L8 = Link(0, 0, 0, 0)
+    links = np.array([L1, L2, L3, L4, L5, L6, L7, L8])
+
+    robot = Arm(links, q0, 'simple_3dof_arm', 4, base)
+    return robot
 
 def noodle_arm(seg_lens, q0, base=None):
     """Creates a complex arm with 10 segments

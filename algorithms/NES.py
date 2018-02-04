@@ -66,9 +66,8 @@ class NES():
 
 		learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
 		noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
-		logging.info("Decay: {}".format(1.0 - decay_rate))
-		self.learning_rate = learning_decay_rate * self.config['learning_rate']
-		self.noise_std_dev *= decay_rate
+		self.learning_rate *= learning_decay_rate
+		self.noise_std_dev *= noise_decay_rate
 		logging.info("Learning Rate: {}".format(self.learning_rate))
 		logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
 
@@ -107,6 +106,6 @@ class NES():
 				plt.plot(x_axes[i], y_axes[i])
 			if types[i] == "scatter":
 				plt.scatter(x_axes[i], y_axes[i])
-				plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])))
+				plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
 			plt.savefig(self.training_directory + filenames[i])
 			plt.clf()

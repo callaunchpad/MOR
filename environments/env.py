@@ -29,7 +29,7 @@ test_cases = {
 				 [1,1,1,1,1,1,0,0,1,1]]
 			],
 	"RobotArm": [
-				robot_arm_envs.get_easy_3dof_environment(),
-				robot_arm_envs.get_easy_environment()
+				robot_arm_envs.get_empty_3dof_environment(),
+				robot_arm_envs.get_easy_3dof_environment()
 			]
 }
