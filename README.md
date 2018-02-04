@@ -16,7 +16,7 @@ Many real-world problems have conflicting objectives, however, it is difficult t
 #### Local Machine
 1. Clone this directory
 2. cd `MOR/`
-3. Run `./train.py <CONFIG_FILENAME>.yaml` to run the algorithm in the foreground (append an `&` at the end to run in the background)
+3. Run `python train <CONFIG_FILENAME>.yaml` to run the algorithm in the foreground (append an `&` at the end to run in the background)
     - Use `<CONFIG_FILENAME> = "Config"` to run the default Maze example
     - Check other config files in `cfg/` for other options, or write your own `.yaml` config file and add it to `cfg/`.
     - Resolve any dependecy issues that may arise
