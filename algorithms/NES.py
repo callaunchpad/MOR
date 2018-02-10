@@ -26,6 +26,7 @@ class NES():
 		self.master_params = self.model.init_master_params()
 		self.learning_rate = self.config['learning_rate']
 		self.noise_std_dev = self.config['noise_std_dev']
+		self.previous_individuals = []
 		logging.info("\nReward:")
 		logging.info(inspect.getsource(self.reward) + "\n")
 
@@ -82,7 +83,22 @@ class NES():
 		population_rewards = []
 		for p in range(self.config['n_populations']):
 			logging.info("Population: {}\n{}".format(p+1, "="*30))
-			noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
+
+			if self.previous_individuals != []:
+				xhat = np.array([np.mean(noise_samples, axis=0)])
+				#print(xhat)
+				#print(np.ones((self.config['n_individuals'],1)).dot(xhat))
+				X_u = self.previous_individuals - np.ones((len(xhat),1)).dot(xhat)
+				#print("Xu", X_u)
+				cov = X_u.T.dot(X_u)
+				#print(cov)
+				cov = (cov/len(xhat))
+
+				noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), cov, self.config['n_individuals'])
+				#print(noise_samples)
+			else:
+				noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
+
 			rewards = np.zeros(self.config['n_individuals'])
 			n_individual_target_reached = 0
 			self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
@@ -93,6 +109,13 @@ class NES():
 				n_individual_target_reached += success
 				logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
 			self.update(noise_samples, rewards, n_individual_target_reached)
+			copy = rewards.copy()
+			copy.sort()
+			fourth = copy[self.config['n_individuals']*3/4]
+			for i in range(self.config['n_individuals']):
+				if rewards[i] >= fourth:
+					self.previous_individuals += [noise_samples[i]]
+			self.previous_individuals = np.array(self.previous_individuals)
 			n_reached_target.append(n_individual_target_reached)
 			population_rewards.append(sum(rewards)/len(rewards))
 			self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
