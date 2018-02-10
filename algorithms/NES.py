@@ -86,16 +86,9 @@ class NES():
 
 			if self.previous_individuals != []:
 				xhat = np.array([np.mean(noise_samples, axis=0)])
-				#print(xhat)
-				#print(np.ones((self.config['n_individuals'],1)).dot(xhat))
 				X_u = self.previous_individuals - np.ones((len(xhat),1)).dot(xhat)
-				#print("Xu", X_u)
-				cov = X_u.T.dot(X_u)
-				#print(cov)
-				cov = (cov/len(xhat))
-
+				cov = X_u.T.dot(X_u)/len(xhat)
 				noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), cov, self.config['n_individuals'])
-				#print(noise_samples)
 			else:
 				noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
 
