@@ -11,9 +11,9 @@ from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
 
 
-class NES():
+class ES():
     """
-    Implementation of approximate NES algorithm by Wierstra: http://people.idsia.ch/~tom/publications/nes.pdf
+    Implementation of NES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
     """
 
     def __init__(self, training_directory, config):
@@ -24,11 +24,8 @@ class NES():
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.master_params = self.model.init_master_params()
-        self.learning_rate = self.config['learning_rate']*100
-        self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
-        for i in range(0, len(self.master_params)):
-            for j in range(i, len(self.master_params)):
-                self.A[i][j] += np.random.normal() * np.sqrt(self.config['noise_std_dev']) * 0.05
+        self.learning_rate = self.config['learning_rate']
+        self.noise_std_dev = self.config['noise_std_dev']
         logging.info("\nReward:")
         logging.info(inspect.getsource(self.reward) + "\n")
 
@@ -67,46 +64,15 @@ class NES():
         if np.std(rewards) != 0.0:
             normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
 
-        Sigma = np.matmul(self.A.T, self.A)
-        inv_Sigma = np.linalg.inv(Sigma)
-        grad_master_params = np.matmul(inv_Sigma, noise_samples.T).T #indivs x params
-        def get_grad_Sigma(noise_sample):
-            return 1/2. * (np.matmul(np.matmul(inv_Sigma, np.outer(noise_sample, noise_sample)), inv_Sigma) - inv_Sigma) #params x params
-        def get_grad_A(noise_sample):
-            grad_Sigma = get_grad_Sigma(noise_sample)
-            return np.matmul(self.A, grad_Sigma + grad_Sigma.T) #upper triangular params x params
-        def get_grad_A_flat(noise_sample):
-            flat = np.zeros(len(self.master_params) * (len(self.master_params) + 1) / 2)
-            grad_A = get_grad_A(noise_sample)
-            count = 0
-            for i in range(0, len(self.master_params)):
-                for j in range(i, len(self.master_params)):
-                    flat[count] = grad_A[i][j]
-                    count += 1
-            return flat #vec: params * (params+1) / 2
-        grad_A = np.array([get_grad_A_flat(noise_sample) for noise_sample in noise_samples]) #indivs x params * (params+1) / 2
-        phi = np.ones((self.config['n_individuals'], len(self.master_params) + len(self.master_params) * (len(self.master_params)+1) / 2 + 1))
-        phi[:, :len(self.master_params)] = grad_master_params
-        phi[:, len(self.master_params):-1] = grad_A
-        update = np.matmul(np.linalg.pinv(phi), normalized_rewards)[:-1]
-        update_params = update[:len(self.master_params)]
-        update_A = update[len(self.master_params):]
-
-        max_eig = np.linalg.eigvalsh(Sigma)[0]
-        self.master_params += update_params * self.learning_rate #*max_eig?
-        count = 0
-        for i in range(0, len(self.master_params)):
-            for j in range(i, len(self.master_params)):
-                self.A[i][j] += update_A[count] * self.learning_rate
-                count += 1
-
-        logging.info("Learning Rate: {}".format(self.learning_rate))
-        logging.info("Largest Eigval of Cov: {}".format(max_eig))
-
         learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
-        self.learning_rate *= learning_decay_rate
         noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
-        self.A *= noise_decay_rate
+        self.learning_rate *= learning_decay_rate
+        self.noise_std_dev *= noise_decay_rate
+        logging.info("Learning Rate: {}".format(self.learning_rate))
+        logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+
+        print(np.linalg.norm((self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)))
+        self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)
 
     def run(self):
         """
@@ -117,17 +83,16 @@ class NES():
         population_rewards = []
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
-            noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), np.matmul(self.A.T, self.A), size=self.config['n_individuals'])
-            #indivs x params
+            noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):
-                # logging.info("Individual: {}".format(i+1))
+                logging.info("Individual: {}".format(i+1))
                 sample_params = self.master_params + noise_samples[i]
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
-                # logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+                logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))

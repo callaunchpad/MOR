@@ -55,7 +55,7 @@ class RobotArm(Environment):
 			except ValueError as e:
 				valid = False
 				logging.warn("Could not solve IK for position: {}". format(location[0]))
-		logging.info("Current Position: {}".format(self.current))
+		# logging.info("Current Position: {}".format(self.current))
 		return valid
 
 	def inputs(self, t):
