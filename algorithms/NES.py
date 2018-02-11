@@ -86,12 +86,18 @@ class NES():
 
 			if self.previous_individuals != []:
 				xhat = np.array([np.mean(noise_samples, axis=0)])
+				#print("mean", xhat)
+				#print(self.previous_individuals)
 				X_u = self.previous_individuals - np.ones((len(xhat),1)).dot(xhat)
-				cov = X_u.T.dot(X_u)/len(xhat)
+				#print("Xu", X_u)
+				cov = X_u.T.dot(X_u)/(xhat.shape[1])
+				#print(xhat.shape)
+				#print("cov", cov)
 				noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), cov, self.config['n_individuals'])
 			else:
 				noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-
+			print("master", self.master_params)
+			print("noise", noise_samples)
 			rewards = np.zeros(self.config['n_individuals'])
 			n_individual_target_reached = 0
 			self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
