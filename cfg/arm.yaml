@@ -6,6 +6,7 @@ config:
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
+  algorithm: "ES"
   environment: "RobotArm"
   environment_index: 0
   model: "FeedForwardNeuralNetwork"

@@ -11,7 +11,7 @@ from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
 
 
-class CMA-ES():
+class CMA_ES():
 	"""
 	Implementation of NES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
 	"""
@@ -64,8 +64,7 @@ class CMA-ES():
 		normalized_rewards = (rewards - np.mean(rewards))
 		if np.std(rewards) != 0.0:
 			normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-
-		learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
+		learning_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
 		self.learning_rate *= learning_decay_rate
 		logging.info("Learning Rate: {}".format(self.learning_rate))
 		logging.info("Noise Std Dev: {}".format(self.noise_std_dev))

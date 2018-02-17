@@ -5,6 +5,7 @@ config:
   n_individuals: 5
   n_timesteps_per_trajectory: 10
 
+  algorithm: "ES"
   environment: "Maze"
   environment_index: 0
   model: "FeedForwardNeuralNetwork"
