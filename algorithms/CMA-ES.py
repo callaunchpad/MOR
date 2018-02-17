@@ -11,7 +11,7 @@ from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
 
 
-class NES():
+class CMA-ES():
 	"""
 	Implementation of NES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
 	"""
