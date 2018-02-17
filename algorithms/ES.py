@@ -65,9 +65,7 @@ class ES():
             normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
 
         learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
-        noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
         self.learning_rate *= learning_decay_rate
-        self.noise_std_dev *= noise_decay_rate
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
 
