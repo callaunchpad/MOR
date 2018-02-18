@@ -57,7 +57,7 @@ if __name__ == "__main__":
 	try:
 		set_seeds(0)
 		config = Config(config_path).config
-		algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES}
+		algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES, "EntES": EntES}
 		algorithm = algorithms[config['algorithm']](training_directory, config)
 		print("Running %s Algorithm..." % (config['algorithm']))
 		print("Check {} for progress".format(log_file))

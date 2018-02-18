@@ -31,7 +31,7 @@ class EntES():
         logging.info("\nReward:")
         logging.info(inspect.getsource(self.reward) + "\n")
 
-    def run_simulation(self, sample_params, model, population, master=False):
+    def run_simulation(self, sample_params, model, population, counts, master=False):
         """
         Black box interaction with environment using model as the action decider given environmental inputs.
         Args:
@@ -40,30 +40,32 @@ class EntES():
         Returns:
             reward (float): Fitness function evaluated on the completed trajectory
         """
+        this_counts = {}
         with tf.Session() as sess:
             reward = 0
             valid = False
-            counts = {}
-            def lookup(k, d):
-                if k in d:
-                    return d[k]
-                else:
-                    return 1
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
-                reward += entropy(probs) / self.config['n_timesteps_per_trajectory']
-                exploration_bonus = [1/np.sqrt(lookup((self.env.current, a), counts)) for a in range(self.config['input_size'])]
                 if self.env.discrete:
                     action = np.argmax(probs)
-                    counts[(self.env.current, a)] = lookup((self.env.current, a), counts) + 1/self.config['n_individuals']
                     # action = np.random.choice(np.arange(probs.shape[0]), p=probs)
                 valid = self.env.act(action, population, sample_params, master)
+                reward += entropy(probs)/self.config['n_timesteps_per_trajectory'] \
+                    + 1/np.sqrt(self.lookup((self.env.current), counts))/self.config['n_timesteps_per_trajectory']
+                this_counts[(self.env.current)] = self.lookup((self.env.current), this_counts, base=0) + 1
+                # counts[(self.env.current)] = self.lookup((self.env.current), counts) + 1/self.config['n_individuals']
             reward += self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
-            return reward, success
+            return reward, success, this_counts
+
+    def lookup(self, k, d, base=1):
+        if k in d:
+            return d[k]
+        else:
+            return base
 
     def update(self, noise_samples, rewards, n_individual_target_reached):
         """
@@ -91,18 +93,24 @@ class EntES():
         model = self.model.model()
         n_reached_target = []
         population_rewards = []
+        counts = {}
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
-            self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
+            self.run_simulation(self.master_params, model, p, counts, master=True) # Run master params for progress check, not used for training
+            batch_counts = {}
             for i in range(self.config['n_individuals']):
                 # logging.info("Individual: {}".format(i+1))
                 sample_params = self.master_params + noise_samples[i]
-                rewards[i], success = self.run_simulation(sample_params, model, p)
+                rewards[i], success, this_counts = self.run_simulation(sample_params, model, p, counts)
                 n_individual_target_reached += success
                 # logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+                for k in this_counts.keys():
+                    batch_counts[k] = self.lookup(k, batch_counts, base=0) + this_counts[k]
+            for k in batch_counts.keys():
+                counts[k] = self.lookup(k, counts) + batch_counts[k]/self.config['n_individuals']
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
