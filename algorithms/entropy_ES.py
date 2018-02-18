@@ -2,6 +2,7 @@ import sys
 import inspect
 import logging
 import numpy as np
+from scipy.stats import entropy
 import tensorflow as tf
 import matplotlib
 matplotlib.use('Agg')
@@ -11,9 +12,9 @@ from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
 
 
-class ES():
+class EntES():
     """
-    Implementation of ES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
+    MaxEnt reward function.
     """
 
     def __init__(self, training_directory, config):
@@ -42,12 +43,22 @@ class ES():
         with tf.Session() as sess:
             reward = 0
             valid = False
+            counts = {}
+            def lookup(k, d):
+                if k in d:
+                    return d[k]
+                else:
+                    return 1
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output
+                probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
+                reward += entropy(probs) / self.config['n_timesteps_per_trajectory']
+                exploration_bonus = [1/np.sqrt(lookup((self.env.current, a), counts)) for a in range(self.config['input_size'])]
                 if self.env.discrete:
-                    action = np.argmax(net_output)
+                    action = np.argmax(probs)
+                    counts[(self.env.current, a)] = lookup((self.env.current, a), counts) + 1/self.config['n_individuals']
+                    # action = np.random.choice(np.arange(probs.shape[0]), p=probs)
                 valid = self.env.act(action, population, sample_params, master)
             reward += self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()

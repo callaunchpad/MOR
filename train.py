@@ -11,6 +11,7 @@ from datetime import datetime
 from cfg.config import Config
 from algorithms.NES import NES
 from algorithms.ES import ES
+from algorithms.entropy_ES import EntES
 
 def config(log_file):
 	logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(message)s')
@@ -53,8 +54,8 @@ if __name__ == "__main__":
 
 	try:
 		set_seeds(0)
-		algorithm = ES(training_directory, Config(config_path).config)
-		print("Running ES Algorithm...")
+		algorithm = EntES(training_directory, Config(config_path).config)
+		print("Running EntES Algorithm...")
 		print("Check {} for progress".format(log_file))
 		algorithm.run()
 	except KeyboardInterrupt:

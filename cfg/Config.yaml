@@ -2,11 +2,11 @@ config:
   learning_rate: 0.2
   noise_std_dev: 0.4
   n_populations: 1000
-  n_individuals: 5
-  n_timesteps_per_trajectory: 10
+  n_individuals: 50
+  n_timesteps_per_trajectory: 50
 
   environment: "Maze"
-  environment_index: 0
+  environment_index: 1
   model: "FeedForwardNeuralNetwork"
   reward: "binary"
   hidden_layer_activation: "selu"

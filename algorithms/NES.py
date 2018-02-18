@@ -24,7 +24,7 @@ class NES():
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.master_params = self.model.init_master_params()
-        self.learning_rate = self.config['learning_rate']*100
+        self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
         for i in range(0, len(self.master_params)):
             for j in range(i, len(self.master_params)):
@@ -93,7 +93,7 @@ class NES():
         update_A = update[len(self.master_params):]
 
         max_eig = np.linalg.eigvalsh(Sigma)[0]
-        self.master_params += update_params * self.learning_rate #*max_eig?
+        self.master_params += update_params * self.learning_rate
         count = 0
         for i in range(0, len(self.master_params)):
             for j in range(i, len(self.master_params)):
@@ -102,11 +102,6 @@ class NES():
 
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Largest Eigval of Cov: {}".format(max_eig))
-
-        learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
-        self.learning_rate *= learning_decay_rate
-        noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
-        self.A *= noise_decay_rate
 
     def run(self):
         """
