@@ -12,6 +12,7 @@ from cfg.config import Config
 from algorithms.NES import NES
 from algorithms.ES import ES
 from algorithms.entropy_ES import EntES
+from algorithms.CMA_ES import CMA_ES
 
 def config(log_file):
 	logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(message)s')
@@ -46,6 +47,7 @@ def get_config_file():
 	return config_path
 
 if __name__ == "__main__":
+
 	args = get_args()
 	training_directory, log_file, timestamp = create_training_contents()
 	config(log_file)
@@ -54,8 +56,10 @@ if __name__ == "__main__":
 
 	try:
 		set_seeds(0)
-		algorithm = EntES(training_directory, Config(config_path).config)
-		print("Running EntES Algorithm...")
+		config = Config(config_path).config
+		algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES}
+		algorithm = algorithms[config['algorithm']](training_directory, config)
+		print("Running %s Algorithm..." % (config['algorithm']))
 		print("Check {} for progress".format(log_file))
 		algorithm.run()
 	except KeyboardInterrupt:

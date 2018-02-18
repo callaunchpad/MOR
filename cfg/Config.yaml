@@ -5,6 +5,7 @@ config:
   n_individuals: 50
   n_timesteps_per_trajectory: 50
 
+  algorithm: "EntES"
   environment: "Maze"
   environment_index: 1
   model: "FeedForwardNeuralNetwork"
