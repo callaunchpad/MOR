@@ -17,3 +17,7 @@ default_config:
   n_nodes_per_layer: 10
   input_size: 9
   output_size: 4
+
+  from_file: False
+  params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
+  save_every: 20

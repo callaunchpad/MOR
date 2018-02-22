@@ -1,5 +1,8 @@
 import numpy as np
 import tensorflow as tf
+
+import os, errno
+import utils
 from activations import Activations
 
 def resolve_model(name):
@@ -14,7 +17,7 @@ class FeedForwardNeuralNetwork():
 		self.config = config
 		self.activations = Activations()
 		self.inputs = tf.placeholder(tf.float32, shape=(1, self.config['input_size']))
-		params_size = (self.config['input_size'] * self.config['n_nodes_per_layer']) + self.config['n_nodes_per_layer'] + self.config['n_hidden_layers'] * (self.config['n_nodes_per_layer']**2 + self.config['n_nodes_per_layer']) + (self.config['n_nodes_per_layer'] * self.config['output_size']) + self.config['output_size']
+		self.params_size = (self.config['input_size'] * self.config['n_nodes_per_layer']) + self.config['n_nodes_per_layer'] + self.config['n_hidden_layers'] * (self.config['n_nodes_per_layer']**2 + self.config['n_nodes_per_layer']) + (self.config['n_nodes_per_layer'] * self.config['output_size']) + self.config['output_size']
 		self.params = tf.placeholder(tf.float32)
 
 	def model(self):
@@ -44,12 +47,18 @@ class FeedForwardNeuralNetwork():
 		output_layer = tf.scalar_mul(self.config['output_scale'], self.activations.resolve_activation(self.config['output_activation'])(tf.add(tf.matmul(hidden_layer, weights), biases)))
 		return output_layer
 
-	def init_master_params(self):
+	def init_master_params(self, from_file=False, filepath=None):
 		"""
 		Computes initial random gaussian values for master weights and biases
 		Returns:
 			(float array): Random gaussian values for neural network weights and biases
 		"""
+		if from_file:
+			master_params = utils.load_array(filepath)
+			if len(master_params) != self.params_size:
+				err_msg = "Params from (" + filepath + ") does not match the network shape."
+				raise ValueError(err_msg)
+			return utils.load_array(filepath)
 		master_params = []
 		weights = np.random.normal(0, 1, self.config['input_size'] * self.config['n_nodes_per_layer'])
 		master_params += list(weights)
@@ -67,6 +76,14 @@ class FeedForwardNeuralNetwork():
 		biases = np.random.normal(0, 1, self.config['output_size'])
 		master_params += list(biases)
 		return master_params
+
+	def save(self, filedir, filename, master_params):
+		try:
+		    os.makedirs(filedir)
+		except OSError as e:
+		    if e.errno != errno.EEXIST:
+		        raise
+		return utils.save_array(filedir + filename, master_params)
 
 	def feed_dict(self, inputs, params):
 		"""

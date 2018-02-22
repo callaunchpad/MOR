@@ -19,16 +19,20 @@ class NES():
     def __init__(self, training_directory, config):
         self.config = config
         self.training_directory = training_directory
+        self.model_save_directory = self.training_directory + 'params/'
         self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.master_params = self.model.init_master_params()
+        self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
         for i in range(0, len(self.master_params)):
             for j in range(i, len(self.master_params)):
                 self.A[i][j] += np.random.normal() * np.sqrt(self.config['noise_std_dev']) * 0.05
+        if (self.config['from_file']):
+            logging.info("\nLoaded Master Params from:")
+            logging.info(self.config['params_file'])
         logging.info("\nReward:")
         logging.info(inspect.getsource(self.reward) + "\n")
 
@@ -127,6 +131,8 @@ class NES():
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
             self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
+            if (p % self.config['save_every'] == 0):
+                self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
 
