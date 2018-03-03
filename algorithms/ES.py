@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model.models import resolve_model
-from model.rewards import resolve_reward
+from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
 
@@ -24,6 +24,10 @@ class ES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
+        self.config['MOR_flag'] == "True"
+        print(self.config['multiple_rewards'])
+        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
+        print("multiple: ", self.multiple_rewards)
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']

@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model.models import resolve_model
-from model.rewards import resolve_reward
+from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
 
@@ -24,6 +24,8 @@ class CMA_ES():
 		self.env.pre_processing()
 		self.model = resolve_model(self.config['model'])(self.config)
 		self.reward = resolve_reward(self.config['reward'])
+		self.MOR_flag = self.config['MOR_flag'] == "True"
+		self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
 		self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
 		self.learning_rate = self.config['learning_rate']
 		self.noise_std_dev = self.config['noise_std_dev']
@@ -31,7 +33,7 @@ class CMA_ES():
 		if (self.config['from_file']):
 			logging.info("\nLoaded Master Params from:")
 			logging.info(self.config['params_file'])
-		logging.info("\nReward:")
+			logging.info("\nReward:")
 		logging.info(inspect.getsource(self.reward) + "\n")
 
 	def run_simulation(self, sample_params, model, population, master=False):
@@ -94,6 +96,7 @@ class CMA_ES():
 				n_individual_target_reached += success
 				logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
 			self.update(noise_samples, rewards, n_individual_target_reached)
+
 			copy = rewards.copy()
 			copy.sort()
 			fourth = copy[self.config['n_individuals']*3/4]
@@ -103,6 +106,8 @@ class CMA_ES():
 					previous_individuals += [noise_samples[i]]
 			previous_individuals = np.array(previous_individuals)
 			self.cov = np.cov(previous_individuals.T)
+
+
 			n_reached_target.append(n_individual_target_reached)
 			population_rewards.append(sum(rewards)/len(rewards))
 			self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
