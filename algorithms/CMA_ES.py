@@ -114,6 +114,7 @@ class CMA_ES():
 			if (p % self.config['save_every'] == 0):
 				self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
 		self.env.post_processing()
+		print(self.multiple_rewards)
 		logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
 
 	def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
