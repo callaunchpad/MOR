@@ -24,6 +24,8 @@ class NES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
+        self.config['MOR_flag'] == "True"
+        self.multiple_rewards = resolve_multiple_rewards(self.config(['multiple_rewards']))        
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix

@@ -11,6 +11,7 @@ config:
   environment_index: 0
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
+  multiple_rewards: "binary, euclidean_distance"
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
