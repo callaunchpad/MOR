@@ -65,9 +65,35 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = (rewards - np.mean(rewards))
-        if np.std(rewards) != 0.0:
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        normalized_rewards = np.array(len(rewards), len(rewards[i]))
+        for i in range(len(rewards[0])):
+            reward = rewards[:,i]
+            normalized_reward = (reward - np.mean(reward))
+            if np.std(reward) != 0.0:
+                normalized_reward = (reward - np.mean(reward)) / np.std(reward)
+            normalized_rewards[:,reward] = normalized_reward
+
+        pareto_front = set()
+        for ind in range(len(normalized_rewards)):
+            ind_reward = normalized_rewards[ind]
+            for sample in pareto_front:
+                if np.all(ind_reward <= sample[0]) and np.any(ind_reward < sample[0]):
+                    break
+                if np.all(ind_reward >= sample[0]) and np.any(ind_reward > sample[0]):
+                    pareto_front.remove(sample)
+                    pareto_front.add((ind_reward, ind))
+
+
+        #only using samples on the pareto front, change later to do top "mu". Using crowding distance only.
+
+        # def crowding_distance(sample, sample_min, sample_max):
+        #     total = 0
+        #     for i in range(len(rewards[0])):
+        #         if sample[i] == sample_min or sample[i] == sample_max:
+        #             total = -1
+        #             break
+        #         else:
+        
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
