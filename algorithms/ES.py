@@ -13,19 +13,24 @@ from environments.env import test_cases, resolve_env
 
 class ES():
     """
-    Implementation of NES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
+    Implementation of ES algorithm by OpenAI: https://arxiv.org/pdf/1703.03864.pdf
     """
 
     def __init__(self, training_directory, config):
         self.config = config
         self.training_directory = training_directory
+        self.model_save_directory = self.training_directory + 'params/'
         self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.master_params = self.model.init_master_params()
+        self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
+        self.moving_success_rate = 0
+        if (self.config['from_file']):
+            logging.info("\nLoaded Master Params from:")
+            logging.info(self.config['params_file'])
         logging.info("\nReward:")
         logging.info(inspect.getsource(self.reward) + "\n")
 
@@ -64,14 +69,12 @@ class ES():
         if np.std(rewards) != 0.0:
             normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
 
-        learning_decay_rate = 1.0 - (float(n_individual_target_reached)/float(self.config['n_individuals']))
-        noise_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
-        self.learning_rate *= learning_decay_rate
-        self.noise_std_dev *= noise_decay_rate
+        self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
+            + (1. - 1./np.e) * self.moving_success_rate
+        self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
 
-        print(np.linalg.norm((self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)
 
     def run(self):
@@ -97,6 +100,8 @@ class ES():
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
             self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
+            if (p % self.config['save_every'] == 0):
+                self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
 

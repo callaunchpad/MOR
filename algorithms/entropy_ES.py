@@ -2,6 +2,7 @@ import sys
 import inspect
 import logging
 import numpy as np
+from scipy.stats import entropy
 import tensorflow as tf
 import matplotlib
 matplotlib.use('Agg')
@@ -11,9 +12,9 @@ from model.rewards import resolve_reward
 from environments.env import test_cases, resolve_env
 
 
-class NES():
+class EntES():
     """
-    Implementation of approximate NES algorithm by Wierstra: http://people.idsia.ch/~tom/publications/nes.pdf
+    MaxEnt reward function.
     """
 
     def __init__(self, training_directory, config):
@@ -25,18 +26,16 @@ class NES():
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
-        self.learning_rate = self.config['learning_rate'] * 20
-        self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
-        for i in range(0, len(self.master_params)):
-            for j in range(i, len(self.master_params)):
-                self.A[i][j] += np.random.normal() * np.sqrt(self.config['noise_std_dev']) * 0.05
+        self.learning_rate = self.config['learning_rate']
+        self.noise_std_dev = self.config['noise_std_dev']
+        self.moving_success_rate = 0
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
         logging.info("\nReward:")
         logging.info(inspect.getsource(self.reward) + "\n")
 
-    def run_simulation(self, sample_params, model, population, master=False):
+    def run_simulation(self, sample_params, model, population, counts, master=False):
         """
         Black box interaction with environment using model as the action decider given environmental inputs.
         Args:
@@ -45,20 +44,32 @@ class NES():
         Returns:
             reward (float): Fitness function evaluated on the completed trajectory
         """
+        this_counts = {}
         with tf.Session() as sess:
             reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output
+                probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
                 if self.env.discrete:
-                    action = np.argmax(net_output)
+                    action = np.argmax(probs)
+                    # action = np.random.choice(np.arange(probs.shape[0]), p=probs)
                 valid = self.env.act(action, population, sample_params, master)
+                reward += entropy(probs)/self.config['n_timesteps_per_trajectory'] \
+                    + 1/np.sqrt(self.lookup((self.env.current), counts))/self.config['n_timesteps_per_trajectory']
+                this_counts[(self.env.current)] = self.lookup((self.env.current), this_counts, base=0) + 1
+                # counts[(self.env.current)] = self.lookup((self.env.current), counts) + 1/self.config['n_individuals']
             reward += self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
-            return reward, success
+            return reward, success, this_counts
+
+    def lookup(self, k, d, base=1):
+        if k in d:
+            return d[k]
+        else:
+            return base
 
     def update(self, noise_samples, rewards, n_individual_target_reached):
         """
@@ -71,41 +82,13 @@ class NES():
         if np.std(rewards) != 0.0:
             normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
 
-        Sigma = np.matmul(self.A.T, self.A)
-        inv_Sigma = np.linalg.inv(Sigma)
-        grad_master_params = np.matmul(inv_Sigma, noise_samples.T).T #indivs x params
-        def get_grad_Sigma(noise_sample):
-            return 1/2. * (np.matmul(np.matmul(inv_Sigma, np.outer(noise_sample, noise_sample)), inv_Sigma) - inv_Sigma) #params x params
-        def get_grad_A(noise_sample):
-            grad_Sigma = get_grad_Sigma(noise_sample)
-            return np.matmul(self.A, grad_Sigma + grad_Sigma.T) #upper triangular params x params
-        def get_grad_A_flat(noise_sample):
-            flat = np.zeros(len(self.master_params) * (len(self.master_params) + 1) / 2)
-            grad_A = get_grad_A(noise_sample)
-            count = 0
-            for i in range(0, len(self.master_params)):
-                for j in range(i, len(self.master_params)):
-                    flat[count] = grad_A[i][j]
-                    count += 1
-            return flat #vec: params * (params+1) / 2
-        grad_A = np.array([get_grad_A_flat(noise_sample) for noise_sample in noise_samples]) #indivs x params * (params+1) / 2
-        phi = np.ones((self.config['n_individuals'], len(self.master_params) + len(self.master_params) * (len(self.master_params)+1) / 2 + 1))
-        phi[:, :len(self.master_params)] = grad_master_params
-        phi[:, len(self.master_params):-1] = grad_A
-        update = np.matmul(np.linalg.pinv(phi), normalized_rewards)[:-1]
-        update_params = update[:len(self.master_params)]
-        update_A = update[len(self.master_params):]
-
-        max_eig = np.linalg.eigvalsh(Sigma)[0]
-        self.master_params += update_params * self.learning_rate
-        count = 0
-        for i in range(0, len(self.master_params)):
-            for j in range(i, len(self.master_params)):
-                self.A[i][j] += update_A[count] * self.learning_rate
-                count += 1
-
+        self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
+            + (1. - 1./np.e) * self.moving_success_rate
+        self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
-        logging.info("Largest Eigval of Cov: {}".format(max_eig))
+        logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+
+        self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)
 
     def run(self):
         """
@@ -114,19 +97,24 @@ class NES():
         model = self.model.model()
         n_reached_target = []
         population_rewards = []
+        counts = {}
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
-            noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), np.matmul(self.A.T, self.A), size=self.config['n_individuals'])
-            #indivs x params
+            noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
-            self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
+            self.run_simulation(self.master_params, model, p, counts, master=True) # Run master params for progress check, not used for training
+            batch_counts = {}
             for i in range(self.config['n_individuals']):
                 # logging.info("Individual: {}".format(i+1))
                 sample_params = self.master_params + noise_samples[i]
-                rewards[i], success = self.run_simulation(sample_params, model, p)
+                rewards[i], success, this_counts = self.run_simulation(sample_params, model, p, counts)
                 n_individual_target_reached += success
                 # logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+                for k in this_counts.keys():
+                    batch_counts[k] = self.lookup(k, batch_counts, base=0) + this_counts[k]
+            for k in batch_counts.keys():
+                counts[k] = self.lookup(k, counts) + batch_counts[k]/self.config['n_individuals']
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))

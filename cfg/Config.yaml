@@ -2,9 +2,10 @@ config:
   learning_rate: 0.2
   noise_std_dev: 0.4
   n_populations: 1000
-  n_individuals: 5
-  n_timesteps_per_trajectory: 10
+  n_individuals: 50
+  n_timesteps_per_trajectory: 20
 
+  algorithm: "EntES"
   environment: "Maze"
   environment_index: 0
   model: "FeedForwardNeuralNetwork"
@@ -17,3 +18,7 @@ config:
   n_nodes_per_layer: 10
   input_size: 9
   output_size: 4
+
+  from_file: False
+  params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
+  save_every: 20
