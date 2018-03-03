@@ -24,8 +24,8 @@ class CMA_ES():
 		self.env.pre_processing()
 		self.model = resolve_model(self.config['model'])(self.config)
 		self.reward = resolve_reward(self.config['reward'])
-        self.MOR_flag = self.config['MOR_flag'] == "True"
-        self.multiple_rewards = resolve_multiple_rewards(self.config(['multiple_rewards']))
+		self.MOR_flag = self.config['MOR_flag'] == "True"
+		self.multiple_rewards = resolve_multiple_rewards(self.config(['multiple_rewards']))
 		self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
 		self.learning_rate = self.config['learning_rate']
 		self.noise_std_dev = self.config['noise_std_dev']
@@ -33,7 +33,7 @@ class CMA_ES():
 		if (self.config['from_file']):
 			logging.info("\nLoaded Master Params from:")
 			logging.info(self.config['params_file'])
-		logging.info("\nReward:")
+			logging.info("\nReward:")
 		logging.info(inspect.getsource(self.reward) + "\n")
 
 	def run_simulation(self, sample_params, model, population, master=False):
