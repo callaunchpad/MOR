@@ -24,7 +24,9 @@ class NES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.config['MOR_flag'] == "True"
+        self.MOR_flag = self.config['MOR_flag'] == "True"
+        if (self.MOR_flag):
+            self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate'] * 20
