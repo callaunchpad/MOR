@@ -38,3 +38,15 @@ def binary(params):
 	if current == target:
 		return 1
 	return -1
+
+def mo_time_score(params):
+	original_score, timesteps = params
+	return original_score - timesteps
+
+def mo_death(params):
+	died = params
+	return died*-1
+
+def mo_success(params):
+	success = params
+	return success
