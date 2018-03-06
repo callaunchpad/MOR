@@ -1,10 +1,11 @@
 import numpy as np
 import logging
-from abstract import Environment
+from ..abstract import Environment
 
 VALID = 0
 INVALID = 1
-END_GAME = 2
+GAME_OVER = 2
+SUCCESS = 3
 
 #################################################
 # Start with score of 1000						#
@@ -16,49 +17,46 @@ END_GAME = 2
 #################################################
 class MOGame(Environment):
 
-	def __init__(self, start_board, start_score, start_agent_loc, training_directory, config):
+	def __init__(self, mo_env, training_directory, config):
 		Environment.__init__(self)
-			self.discrete = False
+		self.discrete = False
 		self.training_directory = training_directory
-			self.config = config
-		self.start_board = start_board
-		self.start_score = start_score
-		self.start_agent_loc = start_agent_loc
-		self.height = len(start_board)
-		self.width = len(start_board[0])
+		self.config = config
+		
+		self.board = mo_env.board
+		self.start_score = mo_env.score
+		self.start_agent_loc = mo_env.current
+		self.goal = mo_env.goal
+		self.height = mo_env.height
+		self.width = mo_env.width
+		self.types = mo_env.types
+
+		self.current = self.start_agent_loc
+		self.score = self.start_score
+
 		self.reset()
 
 	def reset(self):
 		"""
 		Reset current position to beginning.
 		"""
-		self.board = self.start_state
 		self.score = self.start_score
-		self.agent_loc = self.start_agent_loc
+		self.current = self.start_agent_loc
 
 	def get_next_loc(self, action):
-		act_probs = action
-		move = None
-		if self.discrete:
-			move = np.argmax(act_probs)
-		else:
-			move = np.random.choice(np.arange(len(act_probs)), 1, act_probs)
+		assert action <= 4 and action >=0
 
-		next_loc = self.agent_loc
-		if move is 0:
-			pass
-		elif move is 1:
+		next_loc = self.current
+		if action is 1:	# North
 			next_loc[1] -= 1
-			pass
-		elif move is 2:
+		elif action is 2: # South
 			next_loc[1] += 1
-			pass
-		elif move is 3:
+		elif action is 3: # East
 			next_loc[0] += 1
-			pass
-		elif move is 4:
+		elif action is 4: # West
 			next_loc[0] -= 1
-		return move, next_loc
+
+		return action, next_loc
   
 	def act(self, action, population, params, master):
 		"""
@@ -74,9 +72,9 @@ class MOGame(Environment):
 		next_x, next_y = next_loc
 		invalid = False
 
-		if not (0 <= next_x < self.width and 0 <= next_y < self.height): #Runs off of board
+		if not (0 <= next_x and next_x < self.width and 0 <= next_y and next_y < self.height): #Runs off of board
 			invalid = True
-		elif board[next_y][next_x] is '#': #Ran into wall
+		elif self.board[next_y][next_x] is '#': #Ran into wall
 			invalid = True
 		  
 		#--------------POTENTIAL THING TO CHANGE---------------#
@@ -86,10 +84,12 @@ class MOGame(Environment):
 			modified_actions = modified_actions / np.linalg.norm(modified_actions)
 			return act(self, modified_actions, params, master)
 
-		agent_loc = next_loc
+		self.current = next_loc
 
-		if self.board[next_y][next_x] is 'L' or self.board[next_y][next_x] is 'G':
-			return END
+		if self.board[next_y][next_x] is 'L':
+			return GAME_OVER
+		elif self.board[next_y][next_x] is 'G':
+			return SUCCESS
 		else:
 			return VALID
 
@@ -97,38 +97,37 @@ class MOGame(Environment):
 		"""
 		Return the inputs for the neural network
 		"""
+		def encode_point(row, col):
+			encoded = [0] * len(self.types) # [Valid, Wall, Lava, Win, Agent]
+			if row == self.current[0] and col == self.current[1]:
+				encoded[4] = 1
 
-    def encode_point(row, col):
-		encoded = [0] * 5 # [Valid, Wall, Lava, Win, Agent]
-		if row == self.agent_loc[0] and col == self.agent_loc[1]:
-			encoded[4] = 1
+			if self.board[row][col] is ' ':
+				encoded[0] = 1
+			elif self.board[row][col] is '#':
+				encoded[1] = 1
+			elif self.board[row][col] is 'L':
+				encoded[2] = 1
+			elif self.board[row][col] is 'G':
+				encoded[3] = 1
+			return encoded
 
-		if self.board[row][col] is ' ':
-			encoded[0] = 1
-		elif self.board[row][col] is '#':
-			encoded[1] = 1
-		elif self.board[row][col] is 'L':
-			encoded[2] = 1
-		elif self.board[row][col] is 'G':
-			encoded[3] = 1
-		return encoded
+		encoded = []
+		for row in range(self.height):
+			for col in range(self.width):
+				encoded.extend(encode_point(row, col))
 
-	encoded = []
-	for row in range(self.height):
-		for col in range(self.weight):
-			encoded.extend(encode_point(row, col))
-	    
-	return np.array(encoded)
+		return np.array(encoded)
 
 	def reward_params(self, moved):
 		"""
 		Return the parameters for the proposed reward function
 		"""
 		# # = Wall
-	    #   = Valid
-	    # L = Lava
-	    # G = Goal
-	    pass
+		#   = Valid
+		# L = Lava
+		# G = Goal
+		pass
 
 	def pre_processing(self):
 		"""
@@ -146,4 +145,4 @@ class MOGame(Environment):
 		"""
 		Check if the target goal was achieved
 		"""
-		pass
+		return self.current == self.goal

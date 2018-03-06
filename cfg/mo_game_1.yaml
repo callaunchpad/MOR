@@ -6,7 +6,7 @@ config:
   n_timesteps_per_trajectory: 20
 
   algorithm: "EntES"
-  environment: "Maze"
+  environment: "MOGame"
   environment_index: 0
   model: "FeedForwardNeuralNetwork"
   reward: "binary"
@@ -16,7 +16,7 @@ config:
 
   n_hidden_layers: 1
   n_nodes_per_layer: 10
-  input_size: 9
+  input_size: 180
   output_size: 5
 
   from_file: False
