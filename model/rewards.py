@@ -5,7 +5,10 @@ def resolve_reward(name):
 	rewards = {
 		"manhattan_distance": manhattan_distance,
 		"euclidean_distance": euclidean_distance,
-		"binary": binary
+		"binary": binary,
+		"mo_time_score": mo_time_score,
+		"mo_death": mo_death,
+		"mo_success": mo_success
 	}
 	return rewards[name]
 def resolve_multiple_rewards(names):
