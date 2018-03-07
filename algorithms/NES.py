@@ -7,7 +7,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model.models import resolve_model
-from model.rewards import resolve_reward
+from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
 
@@ -24,6 +24,10 @@ class NES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
+        self.MOR_flag = self.config['MOR_flag'] == "True"
+        if (self.MOR_flag):
+            self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
+        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix

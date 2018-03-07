@@ -6,11 +6,12 @@ config:
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
-  algorithm: "ES"
+  algorithm: "EntES"
   environment: "RobotArm"
   environment_index: 0
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
+  multiple_rewards: "binary, euclidean_distance"
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
