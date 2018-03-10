@@ -53,27 +53,33 @@ class Player(pygame.sprite.Sprite):
 
 		# Did this update cause us to hit a wall?
 		block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
-		for block in block_hit_list:
-			# If we are moving right, set our right side to the left side of
-			# the item we hit
-			if self.change_x > 0:
-				self.rect.right = block.rect.left
-			else:
-				# Otherwise if we are moving left, do the opposite.
-				self.rect.left = block.rect.right
+		# for block in block_hit_list:
+		# 	# If we are moving right, set our right side to the left side of
+		# 	# the item we hit
+		# 	if self.change_x > 0:
+		# 		self.rect.right = block.rect.left
+		# 	else:
+		# 		# Otherwise if we are moving left, do the opposite.
+		# 		self.rect.left = block.rect.right
+		if len(block_hit_list > 0):
+			self.rect.x -= self.change_x
 
 		# Move up/down
 		self.rect.y += self.change_y
 
 		# Check and see if we hit anything
 		block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
-		for block in block_hit_list:
+		# for block in block_hit_list:
 
-			# Reset our position based on the top/bottom of the object.
-			if self.change_y > 0:
-				self.rect.bottom = block.rect.top
-			else:
-				self.rect.top = block.rect.bottom
+		# 	# Reset our position based on the top/bottom of the object.
+		# 	if self.change_y > 0:
+		# 		self.rect.bottom = block.rect.top
+		# 	else:
+		# 		self.rect.top = block.rect.bottom
+		if len(block_hit_list > 0):
+			self.rect.y -= self.change_y
+
+		self.move(0, 0)
 
 
 class Wall(pygame.sprite.Sprite):
@@ -202,13 +208,15 @@ class Game(object):
 		assert self.player.rect.x == current[0]
 		assert self.player.rect.y == current[1]
 
-		if action is 1:	# North
+		if action is 0:		#None
+			player.move(0, 0)
+		elif action is 1:	# North
 			player.move(0, -1)
-		elif action is 2: # South
+		elif action is 2: 	# South
 			player.move(0, 1)
-		elif action is 3: # East
+		elif action is 3: 	# East
 			player.move(1, 0)
-		elif action is 4: # West
+		elif action is 4: 	# West
 			player.move(-1, 0)
 
 		self.done = False
