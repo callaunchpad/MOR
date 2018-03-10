@@ -70,7 +70,7 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        if self.multi:
+        if self.MOR_flag:
             normalized_rewards = np.array(len(rewards), len(rewards[i]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
