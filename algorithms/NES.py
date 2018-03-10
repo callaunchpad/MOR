@@ -81,7 +81,7 @@ class NES():
                 if np.std(reward) != 0.0:
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
                 normalized_rewards[:,reward] = normalized_reward
-            
+
 
             top_mu = []
             pareto_front = {}
@@ -102,7 +102,7 @@ class NES():
 
             def crowding_distance(reward, front):
                 total = 0
-                for i in range(len(reward))):
+                for i in range(len(reward)):
                     metric = reward[i]
                     comps = [value for key,value in front.items()]
                     upper = max(comps)

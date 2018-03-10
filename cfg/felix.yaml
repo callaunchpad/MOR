@@ -8,7 +8,7 @@ config:
   algorithm: "EntES"
   environment: "Maze"
   environment_index: 1
-  MOR_flag: "True"
+  MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "binary"
   multiple_rewards: "binary, euclidean_distance"
