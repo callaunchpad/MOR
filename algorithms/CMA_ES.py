@@ -24,7 +24,7 @@ class CMA_ES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.MOR_flag = self.config['MOR_flag'] == "True"
+        self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
@@ -57,7 +57,10 @@ class CMA_ES():
                 if self.env.discrete:
                     action = np.argmax(net_output)
                 valid = self.env.act(action, population, sample_params, master)
-            reward += self.reward(self.env.reward_params(valid))
+            if (self.MOR_flag):
+                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
+            else:
+                reward = self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -70,7 +73,7 @@ class CMA_ES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            normalized_rewards = np.array(len(rewards), len(rewards[0]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))
