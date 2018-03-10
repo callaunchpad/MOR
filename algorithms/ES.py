@@ -24,7 +24,8 @@ class ES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.MOR_flag = self.config['MOR_flag'] == "True"
+        self.mu = self.config['mu']
+        self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
@@ -69,43 +70,66 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = np.array(len(rewards), len(rewards[i]))
-        for i in range(len(rewards[0])):
-            reward = rewards[:,i]
-            normalized_reward = (reward - np.mean(reward))
-            if np.std(reward) != 0.0:
-                normalized_reward = (reward - np.mean(reward)) / np.std(reward)
-            normalized_rewards[:,reward] = normalized_reward
+        if self.multi:
+            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            for i in range(len(rewards[0])):
+                reward = rewards[:,i]
+                normalized_reward = (reward - np.mean(reward))
+                if np.std(reward) != 0.0:
+                    normalized_reward = (reward - np.mean(reward)) / np.std(reward)
+                normalized_rewards[:,reward] = normalized_reward
+            
 
-        pareto_front = set()
-        for ind in range(len(normalized_rewards)):
-            ind_reward = normalized_rewards[ind]
-            for sample in pareto_front:
-                if np.all(ind_reward <= sample[0]) and np.any(ind_reward < sample[0]):
-                    break
-                if np.all(ind_reward >= sample[0]) and np.any(ind_reward > sample[0]):
-                    pareto_front.remove(sample)
-                    pareto_front.add((ind_reward, ind))
+            top_mu = []
+            pareto_front = {}
 
+            while len(top_mu) + len(pareto_front.keys()) < self.mu:
+                top_mu.extend(pareto_front.keys())
+                pareto_front = {}
+                for ind in range(len(normalized_rewards)):
+                    ind_reward = normalized_rewards[ind]
+                    ind_sample = noise_samples[ind]
+                    for sample, reward in pareto_front.items():
+                        if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
+                            break
+                        if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
+                            pareto_front.remove(sample)
+                            pareto_front[ind_sample] = ind_reward
+                            break
 
-        #only using samples on the pareto front, change later to do top "mu". Using crowding distance only.
+            def crowding_distance(reward, front):
+                total = 0
+                for i in range(len(reward))):
+                    metric = reward[i]
+                    comps = [value for key,value in front.items()]
+                    upper = max(comps)
+                    lower = min(comps)
+                    if metric == lower or metric == upper:
+                        return -1
+                    else:
+                        for comp in comps:
+                            if comp > metric:
+                                upper = min(upper, comp)
+                            elif comp < metric:
+                                lower = max(lower, comp)
+                        total += upper - lower
+                return total
 
-        # def crowding_distance(sample, sample_min, sample_max):
-        #     total = 0
-        #     for i in range(len(rewards[0])):
-        #         if sample[i] == sample_min or sample[i] == sample_max:
-        #             total = -1
-        #             break
-        #         else:
-        
+            tie_break = np.asarray([(sample, crowding_distance(reward, front)) for sample,reward in front.items()])
+            top_mu.extend(i[0] for i in tie_break[:self.mu - len(top_mu)])
+            weighted_sum = sum(top_mu)
+
+        else:
+            if np.std(rewards) != 0.0:
+                normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+            weighted_sum = np.dot(noise_samples, normalized_rewards)
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
-
-        self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * np.dot(noise_samples.T, normalized_rewards)
+        self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
 
     def run(self):
         """
