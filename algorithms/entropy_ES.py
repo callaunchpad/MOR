@@ -25,7 +25,7 @@ class EntES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.MOR_flag = self.config['MOR_flag'] == "True"
+        self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
@@ -83,7 +83,7 @@ class EntES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            normalized_rewards = np.array(len(rewards), len(rewards[0]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))

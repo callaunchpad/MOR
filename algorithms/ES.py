@@ -24,13 +24,12 @@ class ES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
-        self.mu = self.config['mu']
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-        self.mu = len(self.master_params)
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
+        self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.moving_success_rate = 0
@@ -59,7 +58,10 @@ class ES():
                 if self.env.discrete:
                     action = np.argmax(net_output)
                 valid = self.env.act(action, population, sample_params, master)
-            reward += self.reward(self.env.reward_params(valid))
+            if (self.MOR_flag):
+                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
+            else:
+                reward = self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -72,7 +74,7 @@ class ES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            normalized_rewards = np.array(len(rewards), rewards[0])
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))

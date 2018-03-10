@@ -5,7 +5,7 @@ config:
   n_individuals: 50
   n_timesteps_per_trajectory: 20
 
-  algorithm: "EntES"
+  algorithm: "ES"
   environment: "Maze"
   environment_index: 0
   MOR_flag: True
