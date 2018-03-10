@@ -27,6 +27,8 @@ class CMA_ES():
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
+            self.reward_mins = np.zeros(len(multiple_rewards[0]))
+            self.reward_maxs = np.zeros(len(multiple_rewards[0]))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate']
@@ -73,9 +75,11 @@ class CMA_ES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[0]))
+            normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
+                self.reward_mins[i] = min(self.reward_mins[i], min(reward))
+                self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
                 if np.std(reward) != 0.0:
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
@@ -104,8 +108,8 @@ class CMA_ES():
                 for i in range(len(reward)):
                     metric = reward[i]
                     comps = [value for key,value in front.items()]
-                    upper = max(comps)
-                    lower = min(comps)
+                    upper = self.reward_maxs[i]
+                    lower = self.reward_mins[i]
                     if metric == lower or metric == upper:
                         return -1
                     else:
