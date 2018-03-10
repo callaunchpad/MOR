@@ -5,8 +5,10 @@ default_config:
   n_individuals: 5
   n_timesteps_per_trajectory: 30
 
+  algorithm: "EntES"
   environment: "Maze"
   environment_index: 1
+  MOR_flag: "True"
   model: "FeedForwardNeuralNetwork"
   reward: "binary"
   hidden_layer_activation: "selu"

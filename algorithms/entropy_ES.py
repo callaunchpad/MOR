@@ -8,7 +8,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from model.models import resolve_model
-from model.rewards import resolve_reward
+from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
 
@@ -25,10 +25,14 @@ class EntES():
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
+        self.MOR_flag = self.config['MOR_flag']
+        if (self.MOR_flag):
+            self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.moving_success_rate = 0
+        self.mu = self.config['mu']
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
@@ -78,7 +82,7 @@ class EntES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        if self.multi:
+        if self.MOR_flag:
             normalized_rewards = np.array(len(rewards), len(rewards[i]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
