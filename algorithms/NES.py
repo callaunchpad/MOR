@@ -27,6 +27,10 @@ class NES():
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
+
+        self.multi = self.config['multi_objective']
+        self.mu = self.config['mu']
+
         for i in range(0, len(self.master_params)):
             for j in range(i, len(self.master_params)):
                 self.A[i][j] += np.random.normal() * np.sqrt(self.config['noise_std_dev']) * 0.05
@@ -67,9 +71,60 @@ class NES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = (rewards - np.mean(rewards))
-        if np.std(rewards) != 0.0:
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        if self.multi:
+            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            for i in range(len(rewards[0])):
+                reward = rewards[:,i]
+                normalized_reward = (reward - np.mean(reward))
+                if np.std(reward) != 0.0:
+                    normalized_reward = (reward - np.mean(reward)) / np.std(reward)
+                normalized_rewards[:,reward] = normalized_reward
+            
+
+            top_mu = []
+            pareto_front = {}
+
+            while len(top_mu) + len(pareto_front.keys()) < mu:
+                top_mu.extend(pareto_front.keys())
+                pareto_front = {}
+                for ind in range(len(normalized_rewards)):
+                    ind_reward = normalized_rewards[ind]
+                    ind_sample = noise_samples[ind]
+                    for sample, reward in pareto_front.items():
+                        if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
+                            break
+                        if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
+                            pareto_front.remove(sample)
+                            pareto_front[ind_sample] = ind_reward
+                            break
+
+            def crowding_distance(reward, front):
+                total = 0
+                for i in range(len(reward))):
+                    metric = reward[i]
+                    comps = [value for key,value in front.items()]
+                    upper = max(comps)
+                    lower = min(comps)
+                    if metric == lower or metric == upper:
+                        return -1
+                    else:
+                        for comp in comps:
+                            if comp > metric:
+                                upper = min(upper, comp)
+                            elif comp < metric:
+                                lower = max(lower, comp)
+                        total += upper - lower
+                return total
+
+            tie_break = np.asarray([(sample, crowding_distance(reward, front)) for sample,reward in front.items()])
+            top_mu.extend(i[0] for i in tie_break[:mu - len(top_mu)])
+            noise_samples = np.asarray(top_mu)
+            weights= np.ones(self.mu)
+
+        else:
+            if np.std(rewards) != 0.0:
+                normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+            weights = normalized_rewards
 
         Sigma = np.matmul(self.A.T, self.A)
         inv_Sigma = np.linalg.inv(Sigma)
@@ -92,7 +147,7 @@ class NES():
         phi = np.ones((self.config['n_individuals'], len(self.master_params) + len(self.master_params) * (len(self.master_params)+1) / 2 + 1))
         phi[:, :len(self.master_params)] = grad_master_params
         phi[:, len(self.master_params):-1] = grad_A
-        update = np.matmul(np.linalg.pinv(phi), normalized_rewards)[:-1]
+        update = np.matmul(np.linalg.pinv(phi), weights)[:-1]
         update_params = update[:len(self.master_params)]
         update_A = update[len(self.master_params):]
 
