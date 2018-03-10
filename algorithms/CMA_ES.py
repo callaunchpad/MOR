@@ -119,6 +119,7 @@ class CMA_ES():
             weighted_sum = sum(top_mu)
 
         else:
+            top_mu = noise_samples
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(noise_samples, normalized_rewards)
@@ -148,18 +149,19 @@ class CMA_ES():
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
-            self.update(noise_samples, rewards, n_individual_target_reached)
+            previous_individuals = self.update(noise_samples, rewards, n_individual_target_reached)
 
-            copy = rewards.copy()
-            copy.sort()
-            fourth = copy[self.config['n_individuals']*3/4]
-            previous_individuals = []
-            for i in range(self.config['n_individuals']):
-                if rewards[i] >= fourth:
-                    previous_individuals += [noise_samples[i]]
-            previous_individuals = np.array(previous_individuals)
+            if not self.MOR_flag:
+                copy = rewards.copy()
+                copy.sort()
+                fourth = copy[self.config['n_individuals']*3/4]
+                previous_individuals = []
+                for i in range(self.config['n_individuals']):
+                    if rewards[i] >= fourth:
+                        previous_individuals += [noise_samples[i]]
+                previous_individuals = np.array(previous_individuals)
+                
             self.cov = np.cov(previous_individuals.T)
-
 
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
