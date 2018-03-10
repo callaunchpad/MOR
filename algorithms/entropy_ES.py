@@ -83,7 +83,7 @@ class EntES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            normalized_rewards = np.array(len(rewards), len(rewards[0]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))
@@ -134,7 +134,7 @@ class EntES():
         else:
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-            weighted_sum = np.dot(noise_samples, normalized_rewards)
+            weighted_sum = np.dot(normalized_rewards, noise_samples)
 
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \

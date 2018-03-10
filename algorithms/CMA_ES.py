@@ -27,7 +27,6 @@ class CMA_ES():
         self.MOR_flag = self.config['MOR_flag'] == "True"
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate']

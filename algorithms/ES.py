@@ -28,7 +28,6 @@ class ES():
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.mu = len(self.master_params)
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate']
@@ -59,6 +58,7 @@ class ES():
                 if self.env.discrete:
                     action = np.argmax(net_output)
                 valid = self.env.act(action, population, sample_params, master)
+
             reward += self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
@@ -72,7 +72,7 @@ class ES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[i]))
+            normalized_rewards = np.array(len(rewards), len(rewards[0]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))
