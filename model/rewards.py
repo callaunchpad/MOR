@@ -40,7 +40,7 @@ def euclidean_distance(params):
 	current, target, solution = params
 	if not solution:
 		return -100
-	return -np.linalg.norm(current - target)
+	return -np.linalg.norm(np.array(current) - np.array(target))
 
 def binary(params):
 	current, target, solution = params
