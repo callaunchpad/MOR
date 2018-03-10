@@ -29,6 +29,7 @@ class NES():
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
+        self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
         self.mu = self.config['mu']
@@ -73,7 +74,7 @@ class NES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        if self.multi:
+        if self.MOR_flag:
             normalized_rewards = np.array(len(rewards), len(rewards[i]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
