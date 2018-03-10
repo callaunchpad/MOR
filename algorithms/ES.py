@@ -27,8 +27,8 @@ class ES():
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-            self.reward_mins = np.zeros(len(multiple_rewards[0]))
-            self.reward_maxs = np.zeros(len(multiple_rewards[0]))
+            self.reward_mins = np.zeros(len(self.multiple_rewards[0]))
+            self.reward_maxs = np.zeros(len(self.multiple_rewards[0]))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate']
@@ -83,7 +83,7 @@ class ES():
                 normalized_reward = (reward - np.mean(reward))
                 if np.std(reward) != 0.0:
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
-                normalized_rewards[:,reward] = normalized_reward
+                normalized_rewards[:,i] = normalized_reward
 
 
             top_mu = []
@@ -147,10 +147,6 @@ class ES():
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            if self.MOR_flag:
-                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
-            else:
-                rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):

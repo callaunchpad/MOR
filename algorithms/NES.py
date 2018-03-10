@@ -26,8 +26,8 @@ class NES():
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-            self.reward_mins = np.zeros(len(multiple_rewards[0]))
-            self.reward_maxs = np.zeros(len(multiple_rewards[0]))
+            self.reward_mins = np.zeros(len(self.multiple_rewards))
+            self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate'] * 20
@@ -86,7 +86,7 @@ class NES():
                 normalized_reward = (reward - np.mean(reward))
                 if np.std(reward) != 0.0:
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
-                normalized_rewards[:,reward] = normalized_reward
+                normalized_rewards[:,i] = normalized_reward
 
 
             top_mu = []
