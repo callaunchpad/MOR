@@ -181,7 +181,10 @@ class NES():
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), np.matmul(self.A.T, self.A), size=self.config['n_individuals'])
             #indivs x params
-            rewards = np.zeros(self.config['n_individuals'])
+            if self.MOR_flag:
+                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
+            else:
+                rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):

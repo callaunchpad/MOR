@@ -160,7 +160,10 @@ class EntES():
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            rewards = np.zeros(self.config['n_individuals'])
+            if self.MOR_flag:
+                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
+            else:
+                rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, counts, master=True) # Run master params for progress check, not used for training
             batch_counts = {}
