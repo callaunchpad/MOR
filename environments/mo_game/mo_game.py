@@ -14,7 +14,7 @@ SUCCESS = 3
 # Valid: Normal square							#
 # Valid: Get on lava (but die)					#
 # Invalid: Hit wall 							#
-# Potential additions: moving goal, 			#
+# Potential additions: moving goal, adversaries #
 #################################################
 class MOGame(Environment):
 
@@ -29,7 +29,7 @@ class MOGame(Environment):
 		    pygame.init()
 		 
 		    size = [mo_env.width, mo_env.height]
-		    screen = pygame.display.set_mode(size)
+		    self.screen = pygame.display.set_mode(size)
 		 
 		    pygame.display.set_caption("Multi-Objective Game")
 		    pygame.mouse.set_visible(False)
@@ -107,9 +107,9 @@ class MOGame(Environment):
 			# Update object positions, check for collisions
 			self.game.run_logic(next_loc)
 			# Draw the current frame
-			self.game.display_frame(screen)
+			self.game.display_frame(self.screen)
 			# Pause for the next frame
-			self.clock.tick(60)
+			self.game.clock.tick(60)
 
 		self.current = next_loc
 

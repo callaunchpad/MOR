@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
 		super(Player, self).__init__()
 
 		# Set height, width
-		self.image = pygame.Surface([15, 15])
+		self.image = pygame.Surface([1, 1])
 		self.image.fill(BLUE)
 
 		# Make our top-left corner the passed-in location.
@@ -61,7 +61,7 @@ class Player(pygame.sprite.Sprite):
 		# 	else:
 		# 		# Otherwise if we are moving left, do the opposite.
 		# 		self.rect.left = block.rect.right
-		if len(block_hit_list > 0):
+		if (len(block_hit_list) > 0):
 			self.rect.x -= self.change_x
 
 		# Move up/down
@@ -76,7 +76,7 @@ class Player(pygame.sprite.Sprite):
 		# 		self.rect.bottom = block.rect.top
 		# 	else:
 		# 		self.rect.top = block.rect.bottom
-		if len(block_hit_list > 0):
+		if (len(block_hit_list) > 0):
 			self.rect.y -= self.change_y
 
 		self.move(0, 0)
@@ -175,7 +175,7 @@ class Game(object):
 		self.player.walls = self.wall_list
 		self.all_sprite_list.add(self.player)
 
-	def process_events(self, current, move):
+	def process_events(self, current, action):
 		""" Process all of the events. Return a "True" if we need
 			to close the window. """
 
@@ -208,7 +208,7 @@ class Game(object):
 		assert self.player.rect.x == current[0]
 		assert self.player.rect.y == current[1]
 
-		if action is 0:		#None
+		if action is 0:		# None
 			player.move(0, 0)
 		elif action is 1:	# North
 			player.move(0, -1)
@@ -229,7 +229,7 @@ class Game(object):
 		"""
 		if not self.done:
 			# Move all the sprites
-			self.all_sprites_list.update()
+			self.all_sprite_list.update()
 
 			assert self.player.rect.x == next_loc[0]
 			assert self.player.rect.y == next_loc[1]
@@ -264,7 +264,7 @@ class Game(object):
 			center_y = (len(self.board) // 2) - (text.get_height() // 2)
 			screen.blit(text, [center_x, center_y])
 		else:
-			self.all_sprites_list.draw(screen)
+			self.all_sprite_list.draw(screen)
 		pygame.display.flip()
 
 def get_easy_environment():
