@@ -76,7 +76,7 @@ class NES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), rewards[0])
+            normalized_rewards = np.array(len(rewards), len(rewards[0]))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
                 normalized_reward = (reward - np.mean(reward))
