@@ -27,6 +27,8 @@ class ES():
         self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
+            self.reward_mins = np.zeros(len(multiple_rewards))
+            self.reward_maxs = np.zeros(len(multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = len(self.master_params)
         self.learning_rate = self.config['learning_rate']
@@ -73,9 +75,11 @@ class ES():
             rewards (float array): List of rewards for each individual in the population
         """
         if self.MOR_flag:
-            normalized_rewards = np.array(len(rewards), len(rewards[0]))
+            normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
+                self.reward_mins[i] = min(self.reward_mins[i], min(reward))
+                self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
                 if np.std(reward) != 0.0:
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
@@ -104,8 +108,8 @@ class ES():
                 for i in range(len(reward)):
                     metric = reward[i]
                     comps = [value for key,value in front.items()]
-                    upper = max(comps)
-                    lower = min(comps)
+                    upper = self.reward_maxs[i]
+                    lower = self.reward_mins[i]
                     if metric == lower or metric == upper:
                         return -1
                     else:
@@ -126,14 +130,11 @@ class ES():
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(noise_samples, normalized_rewards)
 
-
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
-
-
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
 
     def run(self):
@@ -146,8 +147,8 @@ class ES():
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            if (self.MOR_flag):
-                rewards = [0]*len(self.master_params)
+            if self.MOR_flag:
+                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
             else:
                 rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
