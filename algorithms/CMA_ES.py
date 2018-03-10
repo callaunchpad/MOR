@@ -30,7 +30,7 @@ class CMA_ES():
             self.reward_mins = np.zeros(len(self.multiple_rewards))
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
-        self.mu = len(self.master_params)
+        self.mu = min(self.config['n_individuals'], len(self.master_params))
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.cov = np.eye(len(self.master_params))
