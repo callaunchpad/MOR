@@ -79,6 +79,8 @@ class MOGame(Environment):
 		# TODO: during training time do probablistic choice, during test time do deterministic choice
 
 		"""
+		self.score -= 1
+
 		if not np.linalg.norm(action): #No action selected, may not be best way to handle this
 			self.status = INVALID
 			return INVALID 
@@ -155,7 +157,10 @@ class MOGame(Environment):
 		#   = Valid
 		# L = Lava
 		# G = Goal
-		pass
+		time_score = self.score
+		died = self.status == GAME_OVER
+		success = self.status == SUCCESS
+		return [[time_score], [died], [success]]
 
 	def pre_processing(self):
 		"""
