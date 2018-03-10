@@ -130,14 +130,11 @@ class ES():
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(noise_samples, normalized_rewards)
 
-
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
-
-
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
 
     def run(self):
@@ -150,7 +147,10 @@ class ES():
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            rewards = np.zeros(self.config['n_individuals'])
+            if self.MOR_flag:
+                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
+            else:
+                rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):

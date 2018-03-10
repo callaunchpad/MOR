@@ -1,0 +1,21 @@
+config:
+  learning_rate: 0.2
+  noise_std_dev: 1.5
+  n_populations: 1000
+  n_individuals: 200
+  n_timesteps_per_trajectory: 1
+  record_iterations: 50
+
+  environment: "RobotArm"
+  environment_index: 0
+  model: "BatchNormalizationNeuralNetwork"
+  reward: "euclidean_distance"
+  hidden_layer_activation: "selu"
+  output_activation: "none"
+  output_scale: 3
+
+  n_hidden_layers: 1
+  n_nodes_per_layer: 10
+  input_size: 7
+  output_size: 3
+  keep_rate: 0.8 
