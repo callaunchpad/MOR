@@ -1,3 +1,4 @@
+import pygame
 import numpy as np
 import logging
 from ..abstract import Environment
@@ -22,11 +23,24 @@ class MOGame(Environment):
 		self.discrete = False
 		self.training_directory = training_directory
 		self.config = config
+		self.visualize = self.config['visualize']
+		if self.visualize:
+			# Initialize Pygame and set up the window
+		    pygame.init()
+		 
+		    size = [mo_env.width, mo_env.height]
+		    screen = pygame.display.set_mode(size)
+		 
+		    pygame.display.set_caption("Multi-Objective Game")
+		    pygame.mouse.set_visible(False)
+		 
+		    # Create an instance of the Game class
+		    self.game = mo_env.game
 		
 		self.board = mo_env.board
 		self.start_score = mo_env.score
 		self.start_agent_loc = mo_env.current
-		self.goal = mo_env.goal
+		self.status = VALID
 		self.height = mo_env.height
 		self.width = mo_env.width
 		self.types = mo_env.types
@@ -66,6 +80,7 @@ class MOGame(Environment):
 
 		"""
 		if not np.linalg.norm(action): #No action selected, may not be best way to handle this
+			self.status = INVALID
 			return INVALID 
 
 		move, next_loc = self.get_next_loc(action)
@@ -84,13 +99,26 @@ class MOGame(Environment):
 			modified_actions = modified_actions / np.linalg.norm(modified_actions)
 			return act(self, modified_actions, params, master)
 
+		if self.visualize and not self.game.done:
+			# Process events (keystrokes, mouse clicks, etc)
+			self.game.process_events(self.current, move)
+			# Update object positions, check for collisions
+			self.game.run_logic(next_loc)
+			# Draw the current frame
+			self.game.display_frame(screen)
+			# Pause for the next frame
+			self.clock.tick(60)
+
 		self.current = next_loc
 
 		if self.board[next_y][next_x] is 'L':
+			self.status = GAME_OVER
 			return GAME_OVER
 		elif self.board[next_y][next_x] is 'G':
+			self.status = SUCCESS
 			return SUCCESS
 		else:
+			self.status = VALID
 			return VALID
 
 	def inputs(self, timestep):
@@ -139,10 +167,12 @@ class MOGame(Environment):
 		"""
 		Complete any pending post processing tasks
 		"""
-		pass
+		if self.visualize:
+			# Close window and exit
+		    pygame.quit()
 
 	def reached_target(self):
 		"""
 		Check if the target goal was achieved
 		"""
-		return self.current == self.goal
+		return self.status == SUCCESS
