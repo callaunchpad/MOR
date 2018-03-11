@@ -36,21 +36,38 @@ def move(cur, dir):
 	if dir == 3:
 		return cur[0], cur[1] + 1
 
+def backtrace(parent, start, end):
+    path = [end]
+    while path[-1] != start:
+        path.append(parent[path[-1]])
+    path.reverse()
+    return path
+
 def solution_exists(board, start):
 	if (not board or len(board) == 0):
-		return False
+		return None
+	parent = {}
 	queue = [start]
 	visited = []
 	while queue:
-		x, y = queue.pop(0)
-		visited.append((x, y))
-		if board[x][y] == 'G':
-			return True
+		cur = queue.pop(0)
+		visited.append(cur)
+		if board[cur[0]][cur[1]] == 'G':
+			return backtrace(parent, start, cur)
 		for i in range(4):
-			next = move((x, y), i)
+			next = move(cur, i)
 			if valid(board, next) and next not in visited:
+				parent[next] = cur
 				queue.append(next)
-	return False
+	return None
+
+def draw_solution(board, solution_path):
+	sol = np.copy(board)
+	c = " "
+	sol[solution_path[0][0]][solution_path[0][1]] = "A"
+	for i in range(1, len(solution_path) - 1):
+		sol[solution_path[i][0]][solution_path[i][1]] = "O"
+	print "Solution:\n" + str(np.asmatrix(sol))
 
 def manhattan_distance(current, target):
 	if not current or not target:
@@ -71,9 +88,10 @@ def set_goal_start(board, width, height):
 		return set_goal_start(board, width, height)
 	return goal, start
 
-def generate_test(width, height, types):
+def generate_test(width, height, types, probabilities):
 	board, start = None, None
-	while (not solution_exists(board, start)):
+	solution_path = None
+	while (solution_path is None):
 		board = []
 		start = (0, 0)
 		for i in range(height):
@@ -83,11 +101,13 @@ def generate_test(width, height, types):
 					row.append('#')
 				else:
 					# row.append(np.random.choice(types))
-					row.append(np.random.choice(types, p=[0.5, 0.1, 0.4]))
+					row.append(np.random.choice(types, p=probabilities))
 			board.append(row)
 		goal, start = set_goal_start(board, width, height)
 		board[goal[0]][goal[1]] = 'G'
+		solution_path = solution_exists(board, start)
 	print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
+	draw_solution(board, solution_path)
 	return board, start, goal
 
 class Player(pygame.sprite.Sprite):
@@ -373,7 +393,7 @@ def get_easy_environment():
 def get_medium_environment():
 	width, height = 15, 15
 	scale = 800//min(width, height)
-	board, current, goal = generate_test(width, height, [' ', '#', 'L'])
+	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.8, 0.1, 0.1])
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
