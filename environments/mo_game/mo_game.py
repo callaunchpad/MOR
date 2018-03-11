@@ -58,16 +58,16 @@ class MOGame(Environment):
 		assert move <= 4 and move >=0
 
 		next_loc = [0, 0]
-		print "CURRENT: " + str(self.current)
+		# print "CURRENT: " + str(self.current)
 		next_loc[0], next_loc[1] = self.current[0], self.current[1]
 		if move == 1:	# North
-			next_loc[1] -= 1
-		elif move == 2: # South
-			next_loc[1] += 1
-		elif move == 3: # East
-			next_loc[0] += 1
-		elif move == 4: # West
 			next_loc[0] -= 1
+		elif move == 2: # South
+			next_loc[0] += 1
+		elif move == 3: # East
+			next_loc[1] += 1
+		elif move == 4: # West
+			next_loc[1] -= 1
 
 		return move, tuple(next_loc)
 
@@ -90,18 +90,21 @@ class MOGame(Environment):
 
 		if not (0 <= next_x and next_x < self.width and 0 <= next_y and next_y < self.height): #Runs off of board
 			invalid = True
-		elif self.board[next_y][next_x] is '#': #Ran into wall
+		if self.board[next_x][next_y] == '#': #Ran into wall
 			invalid = True
 
 		#--------------POTENTIAL THING TO CHANGE---------------#
 		if invalid:
+			# print "DETECTED WALL"
+			# print "CANNOT MOVE: " + str(move)
+			# sleep(20)
 			self.score += 1
 			modified_actions = np.copy(action)
 			modified_actions[move] = 0
 			modified_actions = np.divide(modified_actions, np.sum(modified_actions))
 			return self.act(modified_actions, population, params, master)
 
-		print "AT: " + str(self.current)
+		# print "AT: " + str(self.current)
 		if self.visualize and not self.game.done:
 			# Process events (keystrokes, mouse clicks, etc)
 			self.game.process_events(self.current, move)
@@ -113,15 +116,15 @@ class MOGame(Environment):
 			self.game.clock.tick(60)
 			sleep(0.1)
 
-		print "MOVING: " + str(move)
+		# print "MOVING: " + str(move)
 
 		self.current = next_loc
-		print "NOW AT: " + str(next_loc)
+		# print "NOW AT: " + str(next_loc)
 
-		if self.board[next_y][next_x] is 'L':
+		if self.board[next_x][next_y] is 'L':
 			self.status = GAME_OVER
 			return GAME_OVER
-		elif self.board[next_y][next_x] is 'G':
+		elif self.board[next_x][next_y] is 'G':
 			self.status = SUCCESS
 			return SUCCESS
 		else:
@@ -148,8 +151,8 @@ class MOGame(Environment):
 			return encoded
 
 		encoded = []
-		for row in range(self.height):
-			for col in range(self.width):
+		for row in range(self.height):		# from top
+			for col in range(self.width):	# from left
 				encoded.extend(encode_point(row, col))
 
 		return np.array(encoded)
@@ -181,6 +184,14 @@ class MOGame(Environment):
 
 			pygame.display.set_caption("Multi-Objective Game")
 			pygame.mouse.set_visible(False)
+
+			# Process events (keystrokes, mouse clicks, etc)
+			self.game.process_events(self.current, (0, 0))
+			# Draw the current frame
+			self.game.display_frame(self.screen)
+			# Pause for the next frame
+			self.game.clock.tick(60)
+			sleep(0.05)
 
 	def post_processing(self):
 		"""

@@ -1,5 +1,6 @@
 import pygame
 import numpy as np
+from time import sleep
 from mo_environment import MOEnvironment
 
 VALID = 0
@@ -42,7 +43,7 @@ def solution_exists(board, start):
 	while queue:
 		x, y = queue.pop(0)
 		visited.append((x, y))
-		if board[y][x] == 'G':
+		if board[x][y] == 'G':
 			return True
 		for i in range(4):
 			next = move((x, y), i)
@@ -84,15 +85,15 @@ def generate_test(width, height, types):
 					row.append(np.random.choice(types, p=[0.5, 0.1, 0.4]))
 			board.append(row)
 		goal, start = set_goal_start(board, width, height)
-		board[goal[1]][goal[0]] = 'G'
-	return board, start
+		board[goal[0]][goal[1]] = 'G'
+	return board, start, goal
 
 class Player(pygame.sprite.Sprite):
 	""" This class represents the bar at the bottom that the player
 	controls. """
 
 	# Constructor function
-	def __init__(self, left, top, scale):
+	def __init__(self, top, left, scale):
 		# Call the parent's constructor
 		super(Player, self).__init__()
 
@@ -113,7 +114,7 @@ class Player(pygame.sprite.Sprite):
 		self.change_y = 0
 		self.walls = None
 
-	def move(self, left, top):
+	def move(self, top, left):
 		""" Queue the move of the player. """
 		self.change_x = left*self.scale
 		self.change_y = top*self.scale
@@ -122,6 +123,7 @@ class Player(pygame.sprite.Sprite):
 		""" Update the player position. """
 		# Move left/right
 		self.rect.x += self.change_x
+		self.rect.y += self.change_y
 
 		# Did this update cause us to hit a wall?
 		# block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
@@ -134,10 +136,12 @@ class Player(pygame.sprite.Sprite):
 		# 		# Otherwise if we are moving left, do the opposite.
 		# 		self.rect.left = block.rect.right
 		# if (len(block_hit_list) > 0):
-		# 	self.rect.x -= self.change_x
+		# 	print "Hit wall"
+		# 	sleep(5)
+			# self.rect.x -= self.change_x
 
 		# Move up/down
-		self.rect.y += self.change_y
+		# self.rect.y += self.change_y
 
 		# Check and see if we hit anything
 		# block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
@@ -149,7 +153,9 @@ class Player(pygame.sprite.Sprite):
 		# 	else:
 		# 		self.rect.top = block.rect.bottom
 		# if (len(block_hit_list) > 0):
-		# 	self.rect.y -= self.change_y
+		# 	print "Hit wall by moving vertically"
+		# 	sleep(5)
+			# self.rect.y -= self.change_y
 
 		self.move(0, 0)
 
@@ -159,7 +165,7 @@ class Player(pygame.sprite.Sprite):
 
 class Wall(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, left, top, width, height):
+	def __init__(self, top, left, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Wall, self).__init__()
@@ -175,7 +181,7 @@ class Wall(pygame.sprite.Sprite):
 
 class Lava(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, left, top, width, height):
+	def __init__(self, top, left, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Lava, self).__init__()
@@ -191,7 +197,7 @@ class Lava(pygame.sprite.Sprite):
 
 class Goal(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, left, top, width, height):
+	def __init__(self, top, left, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Goal, self).__init__()
@@ -239,6 +245,7 @@ class Game(object):
 	def reset(self):
 		self.player.reset()
 		self.done = False
+		self.load_board(self.board, self.start)
 		self.all_sprite_list.update()
 
 	def resolve_scale(self, i, j):
@@ -248,16 +255,16 @@ class Game(object):
 		# Flip rows and columns to be consistent with pygame matrix indices
 		for i in range(len(board)):			# from top
 			for j in range(len(board[0])):	# from left
-				if board[j][i] == '#':
-					wall = Wall(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
+				if board[i][j] == '#':
+					wall = Wall(i*self.scale, j*self.scale, 1*self.scale, 1*self.scale)
 					self.wall_list.add(wall)
 					self.all_sprite_list.add(wall)
-				elif board[j][i] == 'L':
-					lava = Lava(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
+				elif board[i][j] == 'L':
+					lava = Lava(i*self.scale, j*self.scale, 1*self.scale, 1*self.scale)
 					self.lava_list.add(lava)
 					self.all_sprite_list.add(lava)
-				elif board[j][i] == 'G':
-					goal = Goal(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
+				elif board[i][j] == 'G':
+					goal = Goal(i*self.scale, j*self.scale, 1*self.scale, 1*self.scale)
 					self.goal_list.add(goal)
 					self.all_sprite_list.add(goal)
 
@@ -270,27 +277,27 @@ class Game(object):
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				print("GAME OVER")
+				# print("GAME OVER")
 				self.done = True
 				return self.done
 
-		print "self.player.rect.x: " + str(self.player.rect.x)
-		print "self.player.rect.y: " + str(self.player.rect.y)
-		print "current[0]*self.scale: " + str(current[0]*self.scale)
-		print "current[1]*self.scale: " + str(current[1]*self.scale)
-		assert self.player.rect.x == current[0]*self.scale
-		assert self.player.rect.y == current[1]*self.scale
+		# print "self.player.rect.x: " + str(self.player.rect.x)
+		# print "self.player.rect.y: " + str(self.player.rect.y)
+		# print "current[0]*self.scale: " + str(current[0]*self.scale)
+		# print "current[1]*self.scale: " + str(current[1]*self.scale)
+		assert self.player.rect.x == current[1]*self.scale
+		assert self.player.rect.y == current[0]*self.scale
 
 		if action == 0:		# None
 			self.player.move(0, 0)
 		elif action == 1:	# North
-			self.player.move(0, -1)
-		elif action == 2: 	# South
-			self.player.move(0, 1)
-		elif action == 3: 	# East
-			self.player.move(1, 0)
-		elif action == 4: 	# West
 			self.player.move(-1, 0)
+		elif action == 2: 	# South
+			self.player.move(1, 0)
+		elif action == 3: 	# East
+			self.player.move(0, 1)
+		elif action == 4: 	# West
+			self.player.move(0, -1)
 
 		self.done = False
 		return self.done
@@ -304,12 +311,12 @@ class Game(object):
 			# Move all the sprites
 			self.all_sprite_list.update()
 
-			print "self.player.rect.x: " + str(self.player.rect.x)
-			print "self.player.rect.y: " + str(self.player.rect.y)
-			print "next_loc[0]*self.scale: " + str(next_loc[0]*self.scale)
-			print "next_loc[1]*self.scale: " + str(next_loc[1]*self.scale)
-			assert self.player.rect.x == next_loc[0]*self.scale
-			assert self.player.rect.y == next_loc[1]*self.scale
+			# print "self.player.rect.x: " + str(self.player.rect.x)
+			# print "self.player.rect.y: " + str(self.player.rect.y)
+			# print "next_loc[0]*self.scale: " + str(next_loc[1]*self.scale)
+			# print "next_loc[1]*self.scale: " + str(next_loc[0]*self.scale)
+			assert self.player.rect.x == next_loc[1]*self.scale
+			assert self.player.rect.y == next_loc[0]*self.scale
 
 			# See if the player block has collided with anything.
 			lava_hit_list = pygame.sprite.spritecollide(self.player, self.lava_list, True)
@@ -363,8 +370,9 @@ def get_easy_environment():
 def get_medium_environment():
 	width, height = 15, 15
 	scale = 800//min(width, height)
-	board, current = generate_test(width, height, [' ', '#', 'L'])
-	print(current)
+	board, current, goal = generate_test(width, height, [' ', '#', 'L'])
+	# print "CURRENT: " + str(current)
+	# print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
 	score = 1000
 	types = [' ', '#', 'L', 'G', 'A']
