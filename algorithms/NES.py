@@ -92,7 +92,7 @@ class NES():
             top_mu = []
             pareto_front = {}
 
-            while len(top_mu) + len(pareto_front.keys()) < mu:
+            while len(top_mu) + len(pareto_front.keys()) < self.mu:
                 top_mu.extend(pareto_front.keys())
                 pareto_front = {}
                 for ind in range(len(normalized_rewards)):
@@ -100,12 +100,13 @@ class NES():
                     ind_reward = normalized_rewards[ind]
                     ind_sample = noise_samples[ind]
                     comp_front = pareto_front.copy()
-                    for sample, reward in comp_front.items():
+                    for comp in range(len(comp_front.items())):
+                        sample, reward = comp_front.items()[comp]
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
                         if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
-                            pareto_front.remove(ind)
+                            pareto_front.pop(comp)
                             break
                     if not dominated:
                         pareto_front[ind] = ind_reward
