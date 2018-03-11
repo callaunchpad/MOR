@@ -341,9 +341,10 @@ class Game(object):
 		screen.fill(WHITE)
 
 		if self.done:
+			self.all_sprite_list.draw(screen)
 			# font = pygame.font.Font("Serif", 25)
 			font = pygame.font.SysFont("serif", 25)
-			text = font.render("Game Over", True, BLACK)
+			text = font.render("Game Over", True, YELLOW)
 			center_x = (len(self.board[0])*self.scale // 2) - (text.get_width() // 2)
 			center_y = (len(self.board)*self.scale // 2) - (text.get_height() // 2)
 			screen.blit(text, [center_x, center_y])
@@ -371,8 +372,8 @@ def get_medium_environment():
 	width, height = 15, 15
 	scale = 800//min(width, height)
 	board, current, goal = generate_test(width, height, [' ', '#', 'L'])
-	# print "CURRENT: " + str(current)
-	# print "GOAL: " + str(goal)
+	print "CURRENT: " + str(current)
+	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
 	score = 1000
 	types = [' ', '#', 'L', 'G', 'A']

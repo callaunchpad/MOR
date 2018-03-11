@@ -191,7 +191,7 @@ class MOGame(Environment):
 			self.game.display_frame(self.screen)
 			# Pause for the next frame
 			self.game.clock.tick(60)
-			sleep(0.05)
+			# sleep(0.0001)
 
 	def post_processing(self):
 		"""
