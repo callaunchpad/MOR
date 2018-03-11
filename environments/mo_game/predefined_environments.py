@@ -106,6 +106,8 @@ class Player(pygame.sprite.Sprite):
 		self.rect.y = top
 		self.rect.x = left
 
+		self.start = (left, top)
+
 		# Set speed vector
 		self.change_x = 0
 		self.change_y = 0
@@ -122,7 +124,7 @@ class Player(pygame.sprite.Sprite):
 		self.rect.x += self.change_x
 
 		# Did this update cause us to hit a wall?
-		block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
+		# block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
 		# for block in block_hit_list:
 		# 	# If we are moving right, set our right side to the left side of
 		# 	# the item we hit
@@ -131,14 +133,14 @@ class Player(pygame.sprite.Sprite):
 		# 	else:
 		# 		# Otherwise if we are moving left, do the opposite.
 		# 		self.rect.left = block.rect.right
-		if (len(block_hit_list) > 0):
-			self.rect.x -= self.change_x
+		# if (len(block_hit_list) > 0):
+		# 	self.rect.x -= self.change_x
 
 		# Move up/down
 		self.rect.y += self.change_y
 
 		# Check and see if we hit anything
-		block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
+		# block_hit_list = pygame.sprite.spritecollide(self, self.walls, False)
 		# for block in block_hit_list:
 
 		# 	# Reset our position based on the top/bottom of the object.
@@ -146,11 +148,14 @@ class Player(pygame.sprite.Sprite):
 		# 		self.rect.bottom = block.rect.top
 		# 	else:
 		# 		self.rect.top = block.rect.bottom
-		if (len(block_hit_list) > 0):
-			self.rect.y -= self.change_y
+		# if (len(block_hit_list) > 0):
+		# 	self.rect.y -= self.change_y
 
 		self.move(0, 0)
 
+	def reset(self):
+		self.rect.x = self.start[0]
+		self.rect.y = self.start[1]
 
 class Wall(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
@@ -220,6 +225,8 @@ class Game(object):
 		# Create the player object
 		self.player = Player(current[0]*self.scale, current[1]*self.scale, self.scale)
 
+		self.start = current
+
 		self.board = board
 		self.width = len(board[0])
 		self.height = len(board)
@@ -228,6 +235,11 @@ class Game(object):
 		self.clock = pygame.time.Clock()
 		 
 		self.done = False
+
+	def reset(self):
+		self.player.reset()
+		self.done = False
+		self.all_sprite_list.update()
 
 	def resolve_scale(self, i, j):
 		return self.scale*i, self.scale*j

@@ -1,6 +1,7 @@
 import pygame
 import numpy as np
 import logging
+from time import sleep
 from ..abstract import Environment
 
 VALID = 0
@@ -47,6 +48,7 @@ class MOGame(Environment):
 		"""
 		self.score = self.start_score
 		self.current = self.start_agent_loc
+		self.game.reset()
 
 	def get_next_loc(self, action):
 		if self.discrete:
@@ -56,6 +58,7 @@ class MOGame(Environment):
 		assert move <= 4 and move >=0
 
 		next_loc = [0, 0]
+		print "CURRENT: " + str(self.current)
 		next_loc[0], next_loc[1] = self.current[0], self.current[1]
 		if move == 1:	# North
 			next_loc[1] -= 1
@@ -66,7 +69,7 @@ class MOGame(Environment):
 		elif move == 4: # West
 			next_loc[0] -= 1
 
-		return move, next_loc
+		return move, tuple(next_loc)
 
 	def act(self, action, population, params, master):
 		"""
@@ -92,11 +95,13 @@ class MOGame(Environment):
 
 		#--------------POTENTIAL THING TO CHANGE---------------#
 		if invalid:
+			self.score += 1
 			modified_actions = np.copy(action)
 			modified_actions[move] = 0
 			modified_actions = np.divide(modified_actions, np.sum(modified_actions))
 			return self.act(modified_actions, population, params, master)
 
+		print "AT: " + str(self.current)
 		if self.visualize and not self.game.done:
 			# Process events (keystrokes, mouse clicks, etc)
 			self.game.process_events(self.current, move)
@@ -106,8 +111,12 @@ class MOGame(Environment):
 			self.game.display_frame(self.screen)
 			# Pause for the next frame
 			self.game.clock.tick(60)
+			sleep(0.1)
+
+		print "MOVING: " + str(move)
 
 		self.current = next_loc
+		print "NOW AT: " + str(next_loc)
 
 		if self.board[next_y][next_x] is 'L':
 			self.status = GAME_OVER
