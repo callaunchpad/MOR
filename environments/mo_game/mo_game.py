@@ -3,6 +3,7 @@ from pygame.locals import *
 import numpy as np
 import logging
 from time import sleep
+import sys
 from ..abstract import Environment
 
 VALID = 0
@@ -28,6 +29,7 @@ class MOGame(Environment):
 		self.visualize = self.config['visualize']
 		if self.visualize:
 			# Create an instance of the Game class
+			print "CREATE GAME"
 			self.game = mo_env.game
 		
 		self.board = mo_env.board
@@ -52,6 +54,9 @@ class MOGame(Environment):
 		self.current = self.start_agent_loc
 		if self.visualize:
 			self.game.reset()
+
+	def toggle_viz(self, val):
+		self.visualize = val
 
 	def get_next_loc(self, action):
 		if self.discrete:
@@ -84,9 +89,9 @@ class MOGame(Environment):
 		self.score -= 1
 		self.game.timesteps += 1
 
-		if (np.sum(action) != 1): #No action selected, may not be best way to handle this
-			self.status = INVALID
-			return INVALID 
+		# if (np.sum(action) != 1): #No action selected, may not be best way to handle this
+		# 	self.status = INVALID
+		# 	return INVALID 
 
 		move, next_loc = self.get_next_loc(action)
 		next_x, next_y = next_loc
@@ -113,7 +118,8 @@ class MOGame(Environment):
 			# Process events (keystrokes, mouse clicks, etc)
 			self.game.process_events(self.current, move)
 			# Update object positions, check for collisions
-			self.game.run_logic(next_loc)
+			game_status = self.game.run_logic(next_loc)
+			
 			# Draw the current frame
 			self.game.display_frame(self.screen)
 			# Pause for the next frame
@@ -126,15 +132,17 @@ class MOGame(Environment):
 		self.current = next_loc
 		# print "NOW AT: " + str(next_loc)
 
-		if self.board[next_x][next_y] is 'L':
+		if self.board[next_x][next_y] == 'L':
 			self.status = GAME_OVER
-			return GAME_OVER
-		elif self.board[next_x][next_y] is 'G':
+		elif self.board[next_x][next_y] == 'G':
 			self.status = SUCCESS
-			return SUCCESS
 		else:
 			self.status = VALID
-			return VALID
+
+		if self.visualize:
+			assert self.status == game_status
+
+		return self.status
 
 	def inputs(self, timestep):
 		"""
@@ -145,13 +153,13 @@ class MOGame(Environment):
 			if row == self.current[0] and col == self.current[1]:
 				encoded[4] = 1
 
-			if self.board[row][col] is ' ':
+			if self.board[row][col] == ' ':
 				encoded[0] = 1
-			elif self.board[row][col] is '#':
+			elif self.board[row][col] == '#':
 				encoded[1] = 1
-			elif self.board[row][col] is 'L':
+			elif self.board[row][col] == 'L':
 				encoded[2] = 1
-			elif self.board[row][col] is 'G':
+			elif self.board[row][col] == 'G':
 				encoded[3] = 1
 			return encoded
 
@@ -185,6 +193,9 @@ class MOGame(Environment):
 		if self.visualize:
 			# Initialize Pygame and set up the window
 			pygame.init()
+			# pygame.display.init()
+			# pygame.font.init()
+			print "INITIALIZING"
 
 			size = [self.game.scale*self.game.width, self.game.scale*self.game.height]
 			# size = [mo_env.width, mo_env.height]
@@ -207,7 +218,18 @@ class MOGame(Environment):
 		"""
 		if self.visualize:
 			# Close window and exit
-		    pygame.quit()
+			print "CLOSING WINDOWS"
+			self.game.done = True
+			# pygame.display.quit()
+			# for i in range(10):
+			pygame.quit()
+			print "DONE"
+			# sleep(10)
+			# sys.exit(0)
+			# Process events (keystrokes, mouse clicks, etc)
+			# self.game.process_events(self.current, (0, 0))
+			# # Draw the current frame
+			# self.game.display_frame(self.screen)
 
 	def reached_target(self):
 		"""

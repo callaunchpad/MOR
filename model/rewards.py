@@ -56,7 +56,7 @@ def binary(params):
 
 def mo_compound(params):
 	time_score, distance, died, success = params
-	return time_score - distance - 100*died + 100*success
+	return time_score - distance - 100000*died + 500*success
 
 def mo_time_score(params):
 	score = params

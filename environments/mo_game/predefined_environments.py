@@ -89,7 +89,7 @@ def set_goal_start(board, width, height):
 	return goal, start
 
 def generate_test(width, height, types, probabilities):
-
+	print "Generating Board..."
 	board, start = None, None
 	solution_path = None
 	while (solution_path is None):
@@ -302,7 +302,7 @@ class Game(object):
 
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
-				# print("GAME OVER")
+				print("GAME OVER")
 				self.done = True
 				return self.done
 
@@ -343,23 +343,29 @@ class Game(object):
 			assert self.player.rect.x == next_loc[1]*self.scale
 			assert self.player.rect.y == next_loc[0]*self.scale
 
-			# See if the player block has collided with anything.
-			lava_hit_list = pygame.sprite.spritecollide(self.player, self.lava_list, True)
-			goal_hit_list = pygame.sprite.spritecollide(self.player, self.goal_list, True)
+		# See if the player block has collided with anything.
+		wall_hit_list = pygame.sprite.spritecollide(self.player, self.wall_list, True)
+		lava_hit_list = pygame.sprite.spritecollide(self.player, self.lava_list, True)
+		goal_hit_list = pygame.sprite.spritecollide(self.player, self.goal_list, True)
 
-			# Check the list of collisions.
-			for lava in lava_hit_list:
-				self.done = True
-				self.status = GAME_OVER
-				return self.status
+		# Check the list of collisions.
+		for wall in wall_hit_list:
+			self.done = True
+			self.status = INVALID
+			return self.status
 
-			for goal in goal_hit_list:
-				self.done = True
-				self.status = SUCCESS
-				return self.status
-		else:
+		for lava in lava_hit_list:
+			self.done = True
 			self.status = GAME_OVER
 			return self.status
+
+		for goal in goal_hit_list:
+			self.done = True
+			self.status = SUCCESS
+			return self.status
+
+		self.status = VALID
+		return self.status
 
 	def display_frame(self, screen):
 		""" Display everything to the screen for the game. """
@@ -368,14 +374,14 @@ class Game(object):
 		if self.done:
 			self.all_sprite_list.draw(screen)
 			# font = pygame.font.Font("Serif", 25)
-			font = pygame.font.SysFont("sansserif", 40)
+			font = pygame.font.SysFont("sansserif", 30)
 			text = font.render("Game Over", True, DARK_YELLOW)
 			center_x = (len(self.board[0])*self.scale // 2) - (text.get_width() // 2)
 			center_y = (len(self.board)*self.scale // 2) - (text.get_height() // 2)
 			screen.blit(text, [center_x, center_y])
 		else:
 			self.all_sprite_list.draw(screen)
-			font = pygame.font.SysFont("sansserif", 40)
+			font = pygame.font.SysFont("sansserif", 30)
 			text = font.render(str(self.timesteps), True, WHITE)
 			center_x = (self.player.image.get_width() // 2) - (text.get_width() // 2)
 			center_y = (self.player.image.get_height() // 2) - (text.get_height() // 2)
@@ -402,7 +408,7 @@ def get_easy_environment():
 
 def get_medium_environment():
 	width, height = 15, 15
-	scale = 800//min(width, height)
+	scale = 500//min(width, height)
 	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.8, 0.1, 0.1])
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
