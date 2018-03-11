@@ -14,12 +14,13 @@ WHITE = (255, 255, 255)
 BLUE = (50, 50, 255)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
+DARK_YELLOW = (200, 200, 0)
 
 def valid(board, pos):
 	if not pos:
 		return False
-	item = board[pos[1]][pos[0]]
-	if pos[0] < 0 or pos[1] < 0 or pos[1] >= len(board[0]) or pos[1] >= len(board):
+	item = board[pos[0]][pos[1]]
+	if pos[0] < 0 or pos[1] < 0 or pos[1] >= len(board[0]) or pos[0] >= len(board):
 		return False
 	if item == '#' or item == 'L':
 		return False
@@ -27,13 +28,13 @@ def valid(board, pos):
 
 def move(cur, dir):
 	if dir == 0:
-		return cur[0], cur[1] - 1
-	if dir == 1:
-		return cur[0], cur[1] + 1
-	if dir == 2:
 		return cur[0] - 1, cur[1]
-	if dir == 3:
+	if dir == 1:
 		return cur[0] + 1, cur[1]
+	if dir == 2:
+		return cur[0], cur[1] - 1
+	if dir == 3:
+		return cur[0], cur[1] + 1
 
 def solution_exists(board, start):
 	if (not board or len(board) == 0):
@@ -86,6 +87,7 @@ def generate_test(width, height, types):
 			board.append(row)
 		goal, start = set_goal_start(board, width, height)
 		board[goal[0]][goal[1]] = 'G'
+	print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
 	return board, start, goal
 
 class Player(pygame.sprite.Sprite):
@@ -343,8 +345,8 @@ class Game(object):
 		if self.done:
 			self.all_sprite_list.draw(screen)
 			# font = pygame.font.Font("Serif", 25)
-			font = pygame.font.SysFont("serif", 25)
-			text = font.render("Game Over", True, YELLOW)
+			font = pygame.font.SysFont("sansserif", 40)
+			text = font.render("Game Over", True, DARK_YELLOW)
 			center_x = (len(self.board[0])*self.scale // 2) - (text.get_width() // 2)
 			center_y = (len(self.board)*self.scale // 2) - (text.get_height() // 2)
 			screen.blit(text, [center_x, center_y])
