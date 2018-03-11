@@ -53,6 +53,7 @@ class EntES():
             reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
+                # print "T: " + str(t)
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
@@ -63,6 +64,7 @@ class EntES():
                 # counts[(self.env.current)] = self.lookup((self.env.current), counts) + 1/self.config['n_individuals']
             reward += self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
+            # print "RESETTING: " + str(self.env.game.timesteps)
             self.env.reset()
             return reward, success, this_counts
 
@@ -107,11 +109,11 @@ class EntES():
             self.run_simulation(self.master_params, model, p, counts, master=True) # Run master params for progress check, not used for training
             batch_counts = {}
             for i in range(self.config['n_individuals']):
-                # logging.info("Individual: {}".format(i+1))
+                logging.info("Individual: {}".format(i+1))
                 sample_params = self.master_params + noise_samples[i]
                 rewards[i], success, this_counts = self.run_simulation(sample_params, model, p, counts)
                 n_individual_target_reached += success
-                # logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+                logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
                 for k in this_counts.keys():
                     batch_counts[k] = self.lookup(k, batch_counts, base=0) + this_counts[k]
             for k in batch_counts.keys():

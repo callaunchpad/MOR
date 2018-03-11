@@ -9,7 +9,7 @@ config:
   environment: "MOGame"
   environment_index: 1
   model: "FeedForwardNeuralNetwork"
-  reward: "binary"
+  reward: "mo_compound"
   multiple_rewards: "mo_time_score, mo_death, mo_success"
   hidden_layer_activation: "selu"
   output_activation: "softmax"

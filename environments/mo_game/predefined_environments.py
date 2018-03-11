@@ -89,6 +89,7 @@ def set_goal_start(board, width, height):
 	return goal, start
 
 def generate_test(width, height, types, probabilities):
+
 	board, start = None, None
 	solution_path = None
 	while (solution_path is None):
@@ -261,7 +262,7 @@ class Game(object):
 		self.load_board(board, current)
 		 
 		self.clock = pygame.time.Clock()
-		 
+		self.timesteps = 0
 		self.done = False
 
 	def reset(self):
@@ -269,6 +270,8 @@ class Game(object):
 		self.done = False
 		self.load_board(self.board, self.start)
 		self.all_sprite_list.update()
+		self.timesteps = 0
+		# sleep(2)
 
 	def resolve_scale(self, i, j):
 		return self.scale*i, self.scale*j
@@ -372,6 +375,12 @@ class Game(object):
 			screen.blit(text, [center_x, center_y])
 		else:
 			self.all_sprite_list.draw(screen)
+			font = pygame.font.SysFont("sansserif", 40)
+			text = font.render(str(self.timesteps), True, WHITE)
+			center_x = (self.player.image.get_width() // 2) - (text.get_width() // 2)
+			center_y = (self.player.image.get_height() // 2) - (text.get_height() // 2)
+			self.player.image.fill(BLUE)
+			self.player.image.blit(text, [center_x, center_y])
 		pygame.display.flip()
 
 def get_easy_environment():
@@ -383,12 +392,13 @@ def get_easy_environment():
 			 ['#','#','#','#','#','#']]
 	score = 1000
 	current = (1,1)
+	goal = (5,5)
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 
 	game = Game(board, current, 100)
 	assert valid(board, current)
-	return MOEnvironment(game, board, score, current, types, flat_dim)
+	return MOEnvironment(game, board, score, current, goal, types, flat_dim)
 
 def get_medium_environment():
 	width, height = 15, 15
@@ -403,4 +413,4 @@ def get_medium_environment():
 
 	game = Game(board, current, scale)
 	assert valid(board, current)
-	return MOEnvironment(game, board, score, current, types, flat_dim)
+	return MOEnvironment(game, board, score, current, goal, types, flat_dim)

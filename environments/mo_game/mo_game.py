@@ -1,4 +1,5 @@
 import pygame
+from pygame.locals import *
 import numpy as np
 import logging
 from time import sleep
@@ -32,6 +33,7 @@ class MOGame(Environment):
 		self.board = mo_env.board
 		self.start_score = mo_env.score
 		self.start_agent_loc = mo_env.current
+		self.goal = mo_env.goal
 		self.status = VALID
 		self.height = mo_env.height
 		self.width = mo_env.width
@@ -48,7 +50,8 @@ class MOGame(Environment):
 		"""
 		self.score = self.start_score
 		self.current = self.start_agent_loc
-		self.game.reset()
+		if self.visualize:
+			self.game.reset()
 
 	def get_next_loc(self, action):
 		if self.discrete:
@@ -79,6 +82,7 @@ class MOGame(Environment):
 
 		"""
 		self.score -= 1
+		self.game.timesteps += 1
 
 		if (np.sum(action) != 1): #No action selected, may not be best way to handle this
 			self.status = INVALID
@@ -114,7 +118,8 @@ class MOGame(Environment):
 			self.game.display_frame(self.screen)
 			# Pause for the next frame
 			self.game.clock.tick(60)
-			sleep(0.1)
+			# self.game.clock.tick(10)
+			# sleep(0.0001)
 
 		# print "MOVING: " + str(move)
 
@@ -168,7 +173,10 @@ class MOGame(Environment):
 		time_score = self.score
 		died = self.status == GAME_OVER
 		success = self.status == SUCCESS
-		return [[time_score], [died], [success]]
+		# return [[time_score], [died], [success]]
+		# return time_score
+		distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
+		return time_score, distance, died, success
 
 	def pre_processing(self):
 		"""
@@ -180,7 +188,7 @@ class MOGame(Environment):
 
 			size = [self.game.scale*self.game.width, self.game.scale*self.game.height]
 			# size = [mo_env.width, mo_env.height]
-			self.screen = pygame.display.set_mode(size)
+			self.screen = pygame.display.set_mode(size, DOUBLEBUF | RESIZABLE)
 
 			pygame.display.set_caption("Multi-Objective Game")
 			pygame.mouse.set_visible(False)

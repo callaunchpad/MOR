@@ -8,7 +8,8 @@ def resolve_reward(name):
 		"binary": binary,
 		"mo_time_score": mo_time_score,
 		"mo_death": mo_death,
-		"mo_success": mo_success
+		"mo_success": mo_success,
+		"mo_compound": mo_compound
 	}
 	return rewards[name]
 def resolve_multiple_rewards(names):
@@ -53,9 +54,13 @@ def binary(params):
 		return 1
 	return -1
 
+def mo_compound(params):
+	time_score, distance, died, success = params
+	return time_score - distance - 100*died + 100*success
+
 def mo_time_score(params):
-	original_score, timesteps = params
-	return original_score - timesteps
+	score = params
+	return score
 
 def mo_death(params):
 	died = params
