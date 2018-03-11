@@ -25,17 +25,8 @@ class MOGame(Environment):
 		self.config = config
 		self.visualize = self.config['visualize']
 		if self.visualize:
-			# Initialize Pygame and set up the window
-		    pygame.init()
-		 
-		    size = [mo_env.width, mo_env.height]
-		    self.screen = pygame.display.set_mode(size)
-		 
-		    pygame.display.set_caption("Multi-Objective Game")
-		    pygame.mouse.set_visible(False)
-		 
-		    # Create an instance of the Game class
-		    self.game = mo_env.game
+			# Create an instance of the Game class
+			self.game = mo_env.game
 		
 		self.board = mo_env.board
 		self.start_score = mo_env.score
@@ -58,20 +49,25 @@ class MOGame(Environment):
 		self.current = self.start_agent_loc
 
 	def get_next_loc(self, action):
-		assert action <= 4 and action >=0
+		if self.discrete:
+			move = np.argmax(action)
+		else:
+			move = np.random.choice(np.arange(action.shape[0]), p=action)
+		assert move <= 4 and move >=0
 
-		next_loc = self.current
-		if action is 1:	# North
+		next_loc = [0, 0]
+		next_loc[0], next_loc[1] = self.current[0], self.current[1]
+		if move == 1:	# North
 			next_loc[1] -= 1
-		elif action is 2: # South
+		elif move == 2: # South
 			next_loc[1] += 1
-		elif action is 3: # East
+		elif move == 3: # East
 			next_loc[0] += 1
-		elif action is 4: # West
+		elif move == 4: # West
 			next_loc[0] -= 1
 
-		return action, next_loc
-  
+		return move, next_loc
+
 	def act(self, action, population, params, master):
 		"""
 		Move end effector to the given location
@@ -81,7 +77,7 @@ class MOGame(Environment):
 		"""
 		self.score -= 1
 
-		if not np.linalg.norm(action): #No action selected, may not be best way to handle this
+		if (np.sum(action) != 1): #No action selected, may not be best way to handle this
 			self.status = INVALID
 			return INVALID 
 
@@ -93,13 +89,13 @@ class MOGame(Environment):
 			invalid = True
 		elif self.board[next_y][next_x] is '#': #Ran into wall
 			invalid = True
-		  
+
 		#--------------POTENTIAL THING TO CHANGE---------------#
 		if invalid:
 			modified_actions = np.copy(action)
 			modified_actions[move] = 0
-			modified_actions = modified_actions / np.linalg.norm(modified_actions)
-			return act(self, modified_actions, params, master)
+			modified_actions = np.divide(modified_actions, np.sum(modified_actions))
+			return self.act(modified_actions, population, params, master)
 
 		if self.visualize and not self.game.done:
 			# Process events (keystrokes, mouse clicks, etc)
@@ -166,7 +162,16 @@ class MOGame(Environment):
 		"""
 		Complete any pending post processing tasks
 		"""
-		pass
+		if self.visualize:
+			# Initialize Pygame and set up the window
+			pygame.init()
+
+			size = [self.game.scale*self.game.width, self.game.scale*self.game.height]
+			# size = [mo_env.width, mo_env.height]
+			self.screen = pygame.display.set_mode(size)
+
+			pygame.display.set_caption("Multi-Objective Game")
+			pygame.mouse.set_visible(False)
 
 	def post_processing(self):
 		"""

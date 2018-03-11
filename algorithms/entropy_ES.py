@@ -56,11 +56,7 @@ class EntES():
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
-                if self.env.discrete:
-                    action = np.argmax(probs)
-                else:
-                    action = np.random.choice(np.arange(probs.shape[0]), p=probs)
-                valid = self.env.act(action, population, sample_params, master)
+                valid = self.env.act(probs, population, sample_params, master)
                 reward += entropy(probs)/self.config['n_timesteps_per_trajectory'] \
                     + 1/np.sqrt(self.lookup((self.env.current), counts))/self.config['n_timesteps_per_trajectory']
                 this_counts[(self.env.current)] = self.lookup((self.env.current), this_counts, base=0) + 1

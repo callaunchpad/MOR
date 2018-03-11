@@ -1,4 +1,5 @@
 import pygame
+import numpy as np
 from mo_environment import MOEnvironment
 
 VALID = 0
@@ -13,38 +14,107 @@ BLUE = (50, 50, 255)
 RED = (255, 0, 0)
 YELLOW = (255, 255, 0)
 
-def is_valid(board_item):
-	if board_item == ' ' or board_item == 'L' or board_item == 'G':
-		return True
+def valid(board, pos):
+	if not pos:
+		return False
+	item = board[pos[1]][pos[0]]
+	if pos[0] < 0 or pos[1] < 0 or pos[1] >= len(board[0]) or pos[1] >= len(board):
+		return False
+	if item == '#' or item == 'L':
+		return False
+	return True
+
+def move(cur, dir):
+	if dir == 0:
+		return cur[0], cur[1] - 1
+	if dir == 1:
+		return cur[0], cur[1] + 1
+	if dir == 2:
+		return cur[0] - 1, cur[1]
+	if dir == 3:
+		return cur[0] + 1, cur[1]
+
+def solution_exists(board, start):
+	if (not board or len(board) == 0):
+		return False
+	queue = [start]
+	visited = []
+	while queue:
+		x, y = queue.pop(0)
+		visited.append((x, y))
+		if board[y][x] == 'G':
+			return True
+		for i in range(4):
+			next = move((x, y), i)
+			if valid(board, next) and next not in visited:
+				queue.append(next)
 	return False
+
+def manhattan_distance(current, target):
+	if not current or not target:
+		return 0
+	return abs(target[0] - current[0]) + abs(target[1] - current[1])
+
+def set_goal_start(board, width, height):
+	goal, start = None, None
+	while (not valid(board, goal)):
+		goal = (np.random.choice(range(1, height-1)), np.random.choice(range(1, width-1)))
+	t = 0
+	while (not valid(board, start)) or manhattan_distance(start, goal) < (min(width, height)):
+		start = (np.random.choice(range(1, height-1)), np.random.choice(range(1, width-1)))
+		t += 1
+		if (t == 30):
+			break
+	if (t == 30 and ((not valid(board, start)) or manhattan_distance(start, goal) < (min(width, height)))):
+		return set_goal_start(board, width, height)
+	return goal, start
+
+def generate_test(width, height, types):
+	board, start = None, None
+	while (not solution_exists(board, start)):
+		board = []
+		start = (0, 0)
+		for i in range(height):
+			row = []
+			for j in range(width):
+				if i == 0 or j == 0 or i == height - 1 or j == width - 1:
+					row.append('#')
+				else:
+					# row.append(np.random.choice(types))
+					row.append(np.random.choice(types, p=[0.5, 0.1, 0.4]))
+			board.append(row)
+		goal, start = set_goal_start(board, width, height)
+		board[goal[1]][goal[0]] = 'G'
+	return board, start
 
 class Player(pygame.sprite.Sprite):
 	""" This class represents the bar at the bottom that the player
 	controls. """
 
 	# Constructor function
-	def __init__(self, x, y):
+	def __init__(self, left, top, scale):
 		# Call the parent's constructor
 		super(Player, self).__init__()
 
+		self.scale = scale
 		# Set height, width
-		self.image = pygame.Surface([1, 1])
+		self.image = pygame.Surface([1*self.scale, 1*self.scale])
 		self.image.fill(BLUE)
 
 		# Make our top-left corner the passed-in location.
 		self.rect = self.image.get_rect()
-		self.rect.y = y
-		self.rect.x = x
+		self.rect.y = top
+		self.rect.x = left
 
 		# Set speed vector
 		self.change_x = 0
 		self.change_y = 0
 		self.walls = None
 
-	def move(self, x, y):
+	def move(self, left, top):
 		""" Queue the move of the player. """
-		self.change_x = x
-		self.change_y = y
+		self.change_x = left*self.scale
+		self.change_y = top*self.scale
 
 	def update(self):
 		""" Update the player position. """
@@ -84,7 +154,7 @@ class Player(pygame.sprite.Sprite):
 
 class Wall(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, x, y, width, height):
+	def __init__(self, left, top, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Wall, self).__init__()
@@ -95,12 +165,12 @@ class Wall(pygame.sprite.Sprite):
 
 		# Make our top-left corner the passed-in location.
 		self.rect = self.image.get_rect()
-		self.rect.y = y
-		self.rect.x = x
+		self.rect.y = top
+		self.rect.x = left
 
 class Lava(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, x, y, width, height):
+	def __init__(self, left, top, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Lava, self).__init__()
@@ -111,12 +181,12 @@ class Lava(pygame.sprite.Sprite):
 
 		# Make our top-left corner the passed-in location.
 		self.rect = self.image.get_rect()
-		self.rect.y = y
-		self.rect.x = x
+		self.rect.y = top
+		self.rect.x = left
 
 class Goal(pygame.sprite.Sprite):
 	""" Wall the player can run into. """
-	def __init__(self, x, y, width, height):
+	def __init__(self, left, top, width, height):
 		""" Constructor for the wall that the player can run into. """
 		# Call the parent's constructor
 		super(Goal, self).__init__()
@@ -127,17 +197,18 @@ class Goal(pygame.sprite.Sprite):
 
 		# Make our top-left corner the passed-in location.
 		self.rect = self.image.get_rect()
-		self.rect.y = y
-		self.rect.x = x
+		self.rect.y = top
+		self.rect.x = left
 
 class Game(object):
 	""" This class represents an instance of the game. If we need to
 		reset the game we'd just need to create a new instance of this
 		class. """
 
-	def __init__(self, board, current):
+	def __init__(self, board, current, scale):
 		""" Constructor. Create all our attributes and initialize
 		the game. """
+		self.scale = scale
 		# List to hold all the sprites
 		self.all_sprite_list = pygame.sprite.Group()
 		 
@@ -147,28 +218,34 @@ class Game(object):
 		self.goal_list = pygame.sprite.Group()
 
 		# Create the player object
-		self.player = Player(current[0], current[1])
+		self.player = Player(current[0]*self.scale, current[1]*self.scale, self.scale)
 
 		self.board = board
+		self.width = len(board[0])
+		self.height = len(board)
 		self.load_board(board, current)
 		 
 		self.clock = pygame.time.Clock()
 		 
 		self.done = False
 
+	def resolve_scale(self, i, j):
+		return self.scale*i, self.scale*j
+
 	def load_board(self, board, current):
-		for i in range(len(board)):
-			for j in range(len(board[0])):
-				if board[i][j] == '#':
-					wall = Wall(i, j, 1, 1)
+		# Flip rows and columns to be consistent with pygame matrix indices
+		for i in range(len(board)):			# from top
+			for j in range(len(board[0])):	# from left
+				if board[j][i] == '#':
+					wall = Wall(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
 					self.wall_list.add(wall)
 					self.all_sprite_list.add(wall)
-				elif board[i][j] == 'L':
-					lava = Lava(i, j, 1, 1)
+				elif board[j][i] == 'L':
+					lava = Lava(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
 					self.lava_list.add(lava)
 					self.all_sprite_list.add(lava)
-				elif board[i][j] == 'G':
-					goal = Goal(i, j, 1, 1)
+				elif board[j][i] == 'G':
+					goal = Goal(j*self.scale, i*self.scale, 1*self.scale, 1*self.scale)
 					self.goal_list.add(goal)
 					self.all_sprite_list.add(goal)
 
@@ -184,40 +261,24 @@ class Game(object):
 				print("GAME OVER")
 				self.done = True
 				return self.done
-	 
-			# elif event.type == pygame.KEYDOWN:
-			#	 if event.key == pygame.K_LEFT:
-			#		 player.move(-1, 0)
-			#	 elif event.key == pygame.K_RIGHT:
-			#		 player.move(1, 0)
-			#	 elif event.key == pygame.K_UP:
-			#		 player.move(0, -1)
-			#	 elif event.key == pygame.K_DOWN:
-			#		 player.move(0, 1)
-	 
-			# elif event.type == pygame.KEYUP:
-			#	 if event.key == pygame.K_LEFT:
-			#		 player.move(1, 0)
-			#	 elif event.key == pygame.K_RIGHT:
-			#		 player.move(-1, 0)
-			#	 elif event.key == pygame.K_UP:
-			#		 player.move(0, 1)
-			#	 elif event.key == pygame.K_DOWN:
-			#		 player.move(0, -1)
 
-		assert self.player.rect.x == current[0]
-		assert self.player.rect.y == current[1]
+		print "self.player.rect.x: " + str(self.player.rect.x)
+		print "self.player.rect.y: " + str(self.player.rect.y)
+		print "current[0]*self.scale: " + str(current[0]*self.scale)
+		print "current[1]*self.scale: " + str(current[1]*self.scale)
+		assert self.player.rect.x == current[0]*self.scale
+		assert self.player.rect.y == current[1]*self.scale
 
-		if action is 0:		# None
-			player.move(0, 0)
-		elif action is 1:	# North
-			player.move(0, -1)
-		elif action is 2: 	# South
-			player.move(0, 1)
-		elif action is 3: 	# East
-			player.move(1, 0)
-		elif action is 4: 	# West
-			player.move(-1, 0)
+		if action == 0:		# None
+			self.player.move(0, 0)
+		elif action == 1:	# North
+			self.player.move(0, -1)
+		elif action == 2: 	# South
+			self.player.move(0, 1)
+		elif action == 3: 	# East
+			self.player.move(1, 0)
+		elif action == 4: 	# West
+			self.player.move(-1, 0)
 
 		self.done = False
 		return self.done
@@ -231,8 +292,12 @@ class Game(object):
 			# Move all the sprites
 			self.all_sprite_list.update()
 
-			assert self.player.rect.x == next_loc[0]
-			assert self.player.rect.y == next_loc[1]
+			print "self.player.rect.x: " + str(self.player.rect.x)
+			print "self.player.rect.y: " + str(self.player.rect.y)
+			print "next_loc[0]*self.scale: " + str(next_loc[0]*self.scale)
+			print "next_loc[1]*self.scale: " + str(next_loc[1]*self.scale)
+			assert self.player.rect.x == next_loc[0]*self.scale
+			assert self.player.rect.y == next_loc[1]*self.scale
 
 			# See if the player block has collided with anything.
 			lava_hit_list = pygame.sprite.spritecollide(self.player, self.lava_list, True)
@@ -260,8 +325,8 @@ class Game(object):
 			# font = pygame.font.Font("Serif", 25)
 			font = pygame.font.SysFont("serif", 25)
 			text = font.render("Game Over", True, BLACK)
-			center_x = (len(self.board[0]) // 2) - (text.get_width() // 2)
-			center_y = (len(self.board) // 2) - (text.get_height() // 2)
+			center_x = (len(self.board[0])*self.scale // 2) - (text.get_width() // 2)
+			center_y = (len(self.board)*self.scale // 2) - (text.get_height() // 2)
 			screen.blit(text, [center_x, center_y])
 		else:
 			self.all_sprite_list.draw(screen)
@@ -279,6 +344,20 @@ def get_easy_environment():
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 
-	game = Game(board, current)
-	assert is_valid(board[current[0]][current[1]])
+	game = Game(board, current, 100)
+	assert valid(board, current)
+	return MOEnvironment(game, board, score, current, types, flat_dim)
+
+def get_medium_environment():
+	width, height = 15, 15
+	scale = 800//min(width, height)
+	board, current = generate_test(width, height, [' ', '#', 'L'])
+	print(current)
+	print(np.asmatrix(board))
+	score = 1000
+	types = [' ', '#', 'L', 'G', 'A']
+	flat_dim = len(board) * len(board[0]) * len(types)
+
+	game = Game(board, current, scale)
+	assert valid(board, current)
 	return MOEnvironment(game, board, score, current, types, flat_dim)

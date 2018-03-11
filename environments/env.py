@@ -36,6 +36,7 @@ test_cases = {
 				robot_arm_envs.get_easy_3dof_environment()
 			],
 	"MOGame": [
-				mo_game_envs.get_easy_environment()
+				mo_game_envs.get_easy_environment(),
+				mo_game_envs.get_medium_environment()
 			]
 }
