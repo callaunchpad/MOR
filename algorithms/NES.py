@@ -99,15 +99,16 @@ class NES():
                     dominated = False
                     ind_reward = normalized_rewards[ind]
                     ind_sample = noise_samples[ind]
-                    for sample, reward in pareto_front.items():
+                    comp_front = pareto_front.copy()
+                    for sample, reward in comp_front.items():
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
                         if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
-                            pareto_front.remove(sample)
+                            pareto_front.remove(ind)
                             break
                     if not dominated:
-                        pareto_front[ind_sample] = ind_reward
+                        pareto_front[ind] = ind_reward
 
 
             def crowding_distance(reward, front):
