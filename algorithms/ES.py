@@ -30,7 +30,7 @@ class ES():
             self.reward_mins = np.zeros(len(self.multiple_rewards))
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
-        self.mu = self.config['n_individuals']/4.0
+        self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.moving_success_rate = 0
@@ -117,7 +117,7 @@ class ES():
                 total = 0
                 for i in range(len(reward)):
                     metric = reward[i]
-                    comps = [value for key,value in front.items()]
+                    comps = [value[i] for key,value in front.items()]
                     upper = self.reward_maxs[i]
                     lower = self.reward_mins[i]
                     if metric == lower or metric == upper:
@@ -139,7 +139,7 @@ class ES():
         else:
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-            weighted_sum = np.dot(noise_samples, normalized_rewards)
+            weighted_sum = np.dot(normalized_rewards, noise_samples)
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
