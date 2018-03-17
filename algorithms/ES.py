@@ -88,27 +88,29 @@ class ES():
 
             top_mu = []
             pareto_front = {}
+            samples_left = set(range(len(normalized_rewards)))
 
             while len(top_mu) + len(pareto_front.keys()) < self.mu:
+                top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
+                pareto_front = {}
                 new_keys = []
-                for ind in range(len(normalized_rewards)):
+                iter_samples = list(samples_left)
+                for ind in iter_samples:
                     dominated = False
                     ind_reward = normalized_rewards[ind]
                     ind_sample = noise_samples[ind]
                     comp_front = pareto_front.copy()
-                    for comp in range(len(comp_front.items())):
-                        sample, reward = comp_front.items()[comp]
+                    for comp in pareto_front.keys():
+                        sample, reward = comp_front[comp]
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
                         if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
-                            print(comp)
                             pareto_front.pop(comp)
-                            break
+                            samples_left.add(comp)
                     if not dominated:
                         pareto_front[ind] = ind_reward
-                        new_keys += [ind_sample]
-                top_mu.extend(new_keys)
+                        samples_left.remove(ind)
 
 
             def crowding_distance(reward, front):
@@ -129,7 +131,8 @@ class ES():
                         total += upper - lower
                 return total
 
-            tie_break = np.asarray([(sample, crowding_distance(reward, pareto_front)) for sample,reward in pareto_front.items()])
+            tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
+            tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
 
