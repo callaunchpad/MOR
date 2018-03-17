@@ -32,7 +32,6 @@ class EntES():
         self.MOR_flag = self.config['MOR_flag'] == "True"
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
@@ -61,6 +60,9 @@ class EntES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 # print "T: " + str(t)
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
+                # TEST COMPLETED: Input into NN is correct
+                # print np.matrix(self.env.interpret_inputs(inputs.flatten()))
+                # raw_input("Paused (enter to continue)...")
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
                 status = self.env.act(probs, population, sample_params, master)
@@ -110,12 +112,8 @@ class EntES():
         population_rewards = []
         counts = {}
         for p in range(self.config['n_populations']):
-            if self.visualize and p%self.visualize_every == 0:
-                self.env.toggle_viz(True)
-                self.env.pre_processing()
-            else:
-                self.env.toggle_viz(False)
-                self.env.pre_processing()
+            self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = np.zeros(self.config['n_individuals'])

@@ -171,7 +171,8 @@ class MOGame(Environment):
 		return np.array(encoded)
 
 	# Only used for sanity checking NN inputs
-	def interpret_inputs(self, inputs):
+	def interpret_inputs(self, embed):
+		print "TYPES:" + str(len(self.types))
 		width = np.sqrt(len(embed)/len(self.types))
 		split_embed = np.split(embed, len(embed)/len(self.types))
 		board = []
