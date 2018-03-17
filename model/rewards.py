@@ -46,6 +46,6 @@ def binary(params):
 	current, target, solution = params
 	if not solution:
 		return -100
-	if current == target:
+	if list(current) == list(target):
 		return 1
 	return -1

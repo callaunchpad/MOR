@@ -90,8 +90,7 @@ class ES():
             pareto_front = {}
 
             while len(top_mu) + len(pareto_front.keys()) < self.mu:
-                top_mu.extend(pareto_front.keys())
-                pareto_front = {}
+                new_keys = []
                 for ind in range(len(normalized_rewards)):
                     dominated = False
                     ind_reward = normalized_rewards[ind]
@@ -103,10 +102,13 @@ class ES():
                             dominated = True
                             break
                         if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
+                            print(comp)
                             pareto_front.pop(comp)
                             break
                     if not dominated:
                         pareto_front[ind] = ind_reward
+                        new_keys += [ind_sample]
+                top_mu.extend(new_keys)
 
 
             def crowding_distance(reward, front):
@@ -127,8 +129,8 @@ class ES():
                         total += upper - lower
                 return total
 
-            tie_break = np.asarray([(sample, crowding_distance(reward, front)) for sample,reward in front.items()])
-            top_mu.extend(i[0] for i in tie_break[:self.mu - len(top_mu)])
+            tie_break = np.asarray([(sample, crowding_distance(reward, pareto_front)) for sample,reward in pareto_front.items()])
+            top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
 
         else:
