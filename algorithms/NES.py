@@ -29,7 +29,7 @@ class NES():
             self.reward_mins = np.zeros(len(self.multiple_rewards))
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
-        self.mu = self.config['n_individuals']/4.0
+        self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
         self.mu = self.config['mu']
@@ -91,32 +91,36 @@ class NES():
 
             top_mu = []
             pareto_front = {}
+            samples_left = set(range(len(normalized_rewards)))
 
             while len(top_mu) + len(pareto_front.keys()) < self.mu:
-                top_mu.extend(pareto_front.keys())
+                top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
                 pareto_front = {}
-                for ind in range(len(normalized_rewards)):
+                new_keys = []
+                iter_samples = list(samples_left)
+                for ind in iter_samples:
                     dominated = False
                     ind_reward = normalized_rewards[ind]
                     ind_sample = noise_samples[ind]
                     comp_front = pareto_front.copy()
-                    for comp in range(len(comp_front.items())):
-                        sample, reward = comp_front.items()[comp]
+                    for comp in pareto_front.keys():
+                        sample, reward = comp_front[comp]
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
                         if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
                             pareto_front.pop(comp)
-                            break
+                            samples_left.add(comp)
                     if not dominated:
                         pareto_front[ind] = ind_reward
+                        samples_left.remove(ind)
 
 
             def crowding_distance(reward, front):
                 total = 0
                 for i in range(len(reward)):
                     metric = reward[i]
-                    comps = [value for key,value in front.items()]
+                    comps = [value[i] for key,value in front.items()]
                     upper = self.reward_maxs[i]
                     lower = self.reward_mins[i]
                     if metric == lower or metric == upper:
