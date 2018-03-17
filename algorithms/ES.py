@@ -139,7 +139,11 @@ class ES():
         else:
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+<<<<<<< Updated upstream
             weighted_sum = np.dot(normalized_rewards, noise_samples)
+=======
+            weighted_sum = np.dot(normalized_rewards,noise_samples)
+>>>>>>> Stashed changes
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
@@ -173,6 +177,8 @@ class ES():
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
+            #print(rewards)
+            #print(sum(rewards)/len(rewards))
             self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
             if (p % self.config['save_every'] == 0):
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
@@ -183,7 +189,14 @@ class ES():
         for i in range(len(x_axes)):
             plt.title(titles[i])
             if types[i] == "line":
-                plt.plot(x_axes[i], y_axes[i])
+                if self.MOR_flag:
+                    names = self.config['multiple_rewards'].split(",")
+                    for j in range(len(self.multiple_rewards)):
+                        y_vals = [rewards[j] for rewards in y_axes[i]]
+                        plt.plot(x_axes[i], y_vals, label = names[j])
+                        plt.legend()
+                else:
+                    plt.plot(x_axes[i], y_axes[i])
             if types[i] == "scatter":
                 plt.scatter(x_axes[i], y_axes[i])
                 plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
