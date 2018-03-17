@@ -62,7 +62,7 @@ class MOGame(Environment):
 		if self.discrete:
 			move = np.argmax(action)
 		else:
-			move = np.random.choice(np.arange(action.shape[0]), p=action)
+			move = np.random.choice(np.arange(len(action)), p=action)
 		assert move <= 4 and move >=0
 
 		next_loc = [0, 0]
@@ -118,7 +118,7 @@ class MOGame(Environment):
 			# Process events (keystrokes, mouse clicks, etc)
 			self.game.process_events(self.current, move)
 			# Update object positions, check for collisions
-			game_status = self.game.run_logic(next_loc)
+			self.game.run_logic(next_loc)
 			
 			# Draw the current frame
 			self.game.display_frame(self.screen)
@@ -140,7 +140,7 @@ class MOGame(Environment):
 			self.status = VALID
 
 		if self.visualize:
-			assert self.status == game_status
+			assert self.status == self.game.status
 
 		return self.status
 
@@ -170,6 +170,29 @@ class MOGame(Environment):
 
 		return np.array(encoded)
 
+	# Only used for sanity checking NN inputs
+	def interpret_inputs(self, inputs):
+		width = np.sqrt(len(embed)/len(self.types))
+		split_embed = np.split(embed, len(embed)/len(self.types))
+		board = []
+		row = []
+		for i in range(len(split_embed)):
+			if (i != 0 and i%width == 0):
+				board.append(row)
+				row = []
+			item = ' '
+			if split_embed[i][1] == 1:
+				item = '#'
+			elif split_embed[i][2] == 1:
+				item = 'L'
+			elif split_embed[i][3] == 1:
+				item = 'G'
+			elif split_embed[i][4] == 1:
+				item = 'A'
+			row.append(item)
+		board.append(row)
+		return board
+
 	def reward_params(self, moved):
 		"""
 		Return the parameters for the proposed reward function
@@ -178,13 +201,14 @@ class MOGame(Environment):
 		#   = Valid
 		# L = Lava
 		# G = Goal
-		time_score = self.score
+		# time_score = self.score
 		died = self.status == GAME_OVER
-		success = self.status == SUCCESS
-		# return [[time_score], [died], [success]]
-		# return time_score
-		distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
-		return time_score, distance, died, success
+		# success = self.status == SUCCESS
+		# # return [[time_score], [died], [success]]
+		# # return time_score
+		# distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
+		# return time_score, distance, died, success
+		return died
 
 	def pre_processing(self):
 		"""
@@ -195,7 +219,7 @@ class MOGame(Environment):
 			pygame.init()
 			# pygame.display.init()
 			# pygame.font.init()
-			print "INITIALIZING"
+			# print "INITIALIZING"
 
 			size = [self.game.scale*self.game.width, self.game.scale*self.game.height]
 			# size = [mo_env.width, mo_env.height]
@@ -218,12 +242,12 @@ class MOGame(Environment):
 		"""
 		if self.visualize:
 			# Close window and exit
-			print "CLOSING WINDOWS"
+			# print "CLOSING WINDOWS"
 			self.game.done = True
 			# pygame.display.quit()
 			# for i in range(10):
 			pygame.quit()
-			print "DONE"
+			# print "DONE"
 			# sleep(10)
 			# sys.exit(0)
 			# Process events (keystrokes, mouse clicks, etc)

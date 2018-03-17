@@ -92,7 +92,9 @@ def generate_test(width, height, types, probabilities):
 	print "Generating Board..."
 	board, start = None, None
 	solution_path = None
-	while (solution_path is None):
+	attempt = 0
+	while (solution_path is None and attempt < 10):
+		attempt += 1
 		board = []
 		start = (0, 0)
 		for i in range(height):
@@ -107,9 +109,12 @@ def generate_test(width, height, types, probabilities):
 		goal, start = set_goal_start(board, width, height)
 		board[goal[0]][goal[1]] = 'G'
 		solution_path = solution_exists(board, start)
-	print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
-	draw_solution(board, solution_path)
-	return board, start, goal
+	if solution_path:
+		print("{} Solution exists for the given environment.\n".format('\x1b[6;30;42m' + 'Success' + '\x1b[0m'))
+		draw_solution(board, solution_path)
+		return board, start, goal
+	else:
+		return generate_test(width, height, types, probabilities)
 
 class Player(pygame.sprite.Sprite):
 	""" This class represents the bar at the bottom that the player
@@ -396,7 +401,7 @@ def get_easy_environment():
 			 ['#',' ',' ',' ','#','#'],
 			 ['#','#','L',' ','G','#'],
 			 ['#','#','#','#','#','#']]
-	score = 1000
+	score = 500
 	current = (1,1)
 	goal = (5,5)
 	types = [' ', '#', 'L', 'G', 'A']
@@ -413,7 +418,7 @@ def get_medium_environment():
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
-	score = 1000
+	score = 500
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 
