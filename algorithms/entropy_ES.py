@@ -11,6 +11,19 @@ from model.models import resolve_model
 from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
+VALID = 0
+INVALID = 1
+GAME_OVER = 2
+SUCCESS = 3
+
+def approx_equal(a, b):
+    return abs(a - b) < 1e-5
+
+def validate_nn_outputs(output, debug=False):
+    if debug:
+        print output
+        print "Difference: " + str(1 - np.sum(output))
+    assert approx_equal(np.sum(output), 1)
 
 class EntES():
     """
@@ -34,6 +47,8 @@ class EntES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
+        self.visualize = self.config['visualize']
+        self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
@@ -53,21 +68,27 @@ class EntES():
         this_counts = {}
         with tf.Session() as sess:
             reward = 0
-            valid = False
-            for t in range(self.config['n_timesteps_per_trajectory']):
+            status = 0
+            n = self.config['n_timesteps_per_trajectory']
+            for t in range(n):
+                # print "T: " + str(t)
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
+                # CORRECT: Test input into NN
+                # print np.matrix(self.env.interpret_inputs(inputs.flatten()))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
-                if self.env.discrete:
-                    action = np.argmax(probs)
-                    # action = np.random.choice(np.arange(probs.shape[0]), p=probs)
-                valid = self.env.act(action, population, sample_params, master)
-                reward += entropy(probs)/self.config['n_timesteps_per_trajectory'] \
-                    + 1/np.sqrt(self.lookup((self.env.current), counts))/self.config['n_timesteps_per_trajectory']
+                # CORRECT: Test net_outputs
+                validate_nn_outputs(net_output, debug=False)
+                # probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
+                probs = net_output.flatten()
+                status = self.env.act(probs, population, sample_params, master)
+                reward += entropy(probs)/n + 1/np.sqrt(self.lookup((self.env.current), counts))/n
                 this_counts[(self.env.current)] = self.lookup((self.env.current), this_counts, base=0) + 1
                 # counts[(self.env.current)] = self.lookup((self.env.current), counts) + 1/self.config['n_individuals']
-            reward += self.reward(self.env.reward_params(valid))
+                if status != VALID:
+                    break
+            reward += self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
+            # print "RESETTING: " + str(self.env.game.timesteps)
             self.env.reset()
             return reward, success, this_counts
 
@@ -169,6 +190,8 @@ class EntES():
         population_rewards = []
         counts = {}
         for p in range(self.config['n_populations']):
+            self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             if self.MOR_flag:
@@ -183,7 +206,7 @@ class EntES():
                 sample_params = self.master_params + noise_samples[i]
                 rewards[i], success, this_counts = self.run_simulation(sample_params, model, p, counts)
                 n_individual_target_reached += success
-                # logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+                logging.info("Individual {} Reward: {}".format(i+1, rewards[i]))
                 for k in this_counts.keys():
                     batch_counts[k] = self.lookup(k, batch_counts, base=0) + this_counts[k]
             for k in batch_counts.keys():
@@ -194,7 +217,7 @@ class EntES():
             self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
             if (p % self.config['save_every'] == 0):
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
-        self.env.post_processing()
+            self.env.post_processing()
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
 
     def plot_graphs(self, x_axes, y_axes, titles, filenames, types):

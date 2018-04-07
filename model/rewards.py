@@ -5,7 +5,11 @@ def resolve_reward(name):
 	rewards = {
 		"manhattan_distance": manhattan_distance,
 		"euclidean_distance": euclidean_distance,
-		"binary": binary
+		"binary": binary,
+		"mo_time_score": mo_time_score,
+		"mo_death": mo_death,
+		"mo_success": mo_success,
+		"mo_compound": mo_compound
 	}
 	return rewards[name]
 def resolve_multiple_rewards(names):
@@ -49,3 +53,19 @@ def binary(params):
 	if list(current) == list(target):
 		return 1
 	return -1
+
+def mo_compound(params):
+	time_score, distance, died, success = params
+	return (-distance*time_score*(1-died*-1) + 7000)*.001
+
+def mo_time_score(params):
+	score = params
+	return score
+
+def mo_death(params):
+	died = params
+	return died*-1
+
+def mo_success(params):
+	success = params
+	return success

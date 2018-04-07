@@ -10,6 +10,10 @@ from model.models import resolve_model
 from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
+VALID = 0
+INVALID = 1
+GAME_OVER = 2
+SUCCESS = 3
 
 class ES():
     """
@@ -55,14 +59,13 @@ class ES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output
-                if self.env.discrete:
-                    action = np.argmax(net_output)
-                valid = self.env.act(action, population, sample_params, master)
+                status = self.env.act(probs, population, sample_params, master)
+                if status != VALID:
+                    break
             if (self.MOR_flag):
-                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
+                reward = [func(self.env.reward_params(status)) for func in self.multiple_rewards]
             else:
-                reward = self.reward(self.env.reward_params(valid))
+                reward = self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
