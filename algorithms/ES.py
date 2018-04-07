@@ -59,6 +59,7 @@ class ES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
+                probs = net_output.flatten()
                 status = self.env.act(probs, population, sample_params, master)
                 if status != VALID:
                     break
