@@ -63,6 +63,7 @@ class ES():
                 status = self.env.act(probs, population, sample_params, master)
                 if status != VALID:
                     break
+            reward += self.reward(self.env.reward_params(valid))
             if (self.MOR_flag):
                 reward = [func(self.env.reward_params(status)) for func in self.multiple_rewards]
             else:
@@ -78,6 +79,9 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
+        normalized_rewards = (rewards - np.mean(rewards))
+        if np.std(rewards) != 0.0:
+            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
@@ -162,10 +166,7 @@ class ES():
         for p in range(self.config['n_populations']):
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            if self.MOR_flag:
-                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
-            else:
-                rewards = np.zeros(self.config['n_individuals'])
+            rewards = [0]*self.config['n_individuals']
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):
@@ -174,6 +175,7 @@ class ES():
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+            rewards = np.array(rewards)
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
