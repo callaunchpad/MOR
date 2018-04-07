@@ -23,14 +23,17 @@ class NES():
         self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
-        self.reward = resolve_reward(self.config['reward'])
-        self.MOR_flag = self.config['MOR_flag'] == "True"
+        self.MOR_flag = self.config['MOR_flag']
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
-        self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
+            self.reward_mins = np.zeros(len(self.multiple_rewards))
+            self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
+        self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate'] * 20
         self.A = np.sqrt(self.config['noise_std_dev']) * np.eye(len(self.master_params)) #sqrt of cov matrix
+        self.mu = self.config['mu']
+
         for i in range(0, len(self.master_params)):
             for j in range(i, len(self.master_params)):
                 self.A[i][j] += np.random.normal() * np.sqrt(self.config['noise_std_dev']) * 0.05
@@ -59,7 +62,10 @@ class NES():
                 if self.env.discrete:
                     action = np.argmax(net_output)
                 valid = self.env.act(action, population, sample_params, master)
-            reward += self.reward(self.env.reward_params(valid))
+            if (self.MOR_flag):
+                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
+            else:
+                reward = self.reward(self.env.reward_params(valid))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -71,9 +77,72 @@ class NES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = (rewards - np.mean(rewards))
-        if np.std(rewards) != 0.0:
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        if self.MOR_flag:
+            normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
+            for i in range(len(rewards[0])):
+                reward = rewards[:,i]
+                self.reward_mins[i] = min(self.reward_mins[i], min(reward))
+                self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
+                normalized_reward = (reward - np.mean(reward))
+                if np.std(reward) != 0.0:
+                    normalized_reward = (reward - np.mean(reward)) / np.std(reward)
+                normalized_rewards[:,i] = normalized_reward
+
+
+            top_mu = []
+            pareto_front = {}
+            samples_left = set(range(len(normalized_rewards)))
+
+            while len(top_mu) + len(pareto_front.keys()) < self.mu:
+                top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
+                pareto_front = {}
+                new_keys = []
+                iter_samples = list(samples_left)
+                for ind in iter_samples:
+                    dominated = False
+                    ind_reward = normalized_rewards[ind]
+                    ind_sample = noise_samples[ind]
+                    comp_front = pareto_front.copy()
+                    for comp in pareto_front.keys():
+                        sample, reward = comp_front[comp]
+                        if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
+                            dominated = True
+                            break
+                        if np.all(ind_reward >= reward) and np.any(ind_reward > reward):
+                            pareto_front.pop(comp)
+                            samples_left.add(comp)
+                    if not dominated:
+                        pareto_front[ind] = ind_reward
+                        samples_left.remove(ind)
+
+
+            def crowding_distance(reward, front):
+                total = 0
+                for i in range(len(reward)):
+                    metric = reward[i]
+                    comps = [value[i] for key,value in front.items()]
+                    upper = self.reward_maxs[i]
+                    lower = self.reward_mins[i]
+                    if metric == lower or metric == upper:
+                        return -1
+                    else:
+                        for comp in comps:
+                            if comp > metric:
+                                upper = min(upper, comp)
+                            elif comp < metric:
+                                lower = max(lower, comp)
+                        total += upper - lower
+                return total
+
+            tie_break = np.asarray([(sample, crowding_distance(reward, front)) for sample,reward in front.items()])
+            top_mu.extend(i[0] for i in tie_break[:mu - len(top_mu)])
+            noise_samples = np.asarray(top_mu)
+            weights= np.ones(self.mu)
+
+        else:
+            if np.std(rewards) != 0.0:
+                normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+            weights = normalized_rewards
 
         Sigma = np.matmul(self.A.T, self.A)
         inv_Sigma = np.linalg.inv(Sigma)
@@ -96,7 +165,7 @@ class NES():
         phi = np.ones((self.config['n_individuals'], len(self.master_params) + len(self.master_params) * (len(self.master_params)+1) / 2 + 1))
         phi[:, :len(self.master_params)] = grad_master_params
         phi[:, len(self.master_params):-1] = grad_A
-        update = np.matmul(np.linalg.pinv(phi), normalized_rewards)[:-1]
+        update = np.matmul(np.linalg.pinv(phi), weights)[:-1]
         update_params = update[:len(self.master_params)]
         update_A = update[len(self.master_params):]
 
@@ -122,7 +191,10 @@ class NES():
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.multivariate_normal(np.zeros(len(self.master_params)), np.matmul(self.A.T, self.A), size=self.config['n_individuals'])
             #indivs x params
-            rewards = np.zeros(self.config['n_individuals'])
+            if self.MOR_flag:
+                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
+            else:
+                rewards = np.zeros(self.config['n_individuals'])
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):

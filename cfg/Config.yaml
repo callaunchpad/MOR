@@ -5,11 +5,13 @@ config:
   n_individuals: 50
   n_timesteps_per_trajectory: 20
 
-  algorithm: "EntES"
+  algorithm: "ES"
   environment: "Maze"
   environment_index: 0
+  MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "binary"
+  multiple_rewards: "binary, euclidean_distance"
   hidden_layer_activation: "selu"
   output_activation: "softmax"
   output_scale: 1

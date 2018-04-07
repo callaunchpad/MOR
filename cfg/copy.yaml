@@ -6,13 +6,10 @@ config:
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
-  algorithm: "ES"
   environment: "RobotArm"
   environment_index: 0
-  MOR_flag: True
-  model: "FeedForwardNeuralNetwork"
+  model: "BatchNormalizationNeuralNetwork"
   reward: "euclidean_distance"
-  multiple_rewards: "manhattan_distance, euclidean_distance"
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
@@ -21,7 +18,4 @@ config:
   n_nodes_per_layer: 10
   input_size: 7
   output_size: 3
-
-  from_file: False
-  params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
-  save_every: 20
+  keep_rate: 0.8 

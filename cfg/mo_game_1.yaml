@@ -4,12 +4,14 @@ config:
   n_populations: 1000
   n_individuals: 100
   n_timesteps_per_trajectory: 200
+  record_iterations: 50
 
   algorithm: "EntES"
   environment: "MOGame"
   environment_index: 1
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
+  MOR_flag: True
   multiple_rewards: "mo_time_score, mo_death, mo_success"
   hidden_layer_activation: "selu"
   output_activation: "softmax"
