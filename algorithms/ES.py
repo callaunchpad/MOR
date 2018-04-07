@@ -53,6 +53,7 @@ class ES():
         Returns:
             reward (float): Fitness function evaluated on the completed trajectory
         """
+
         with tf.Session() as sess:
             reward = 0
             valid = False
