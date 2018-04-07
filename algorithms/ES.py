@@ -139,11 +139,7 @@ class ES():
         else:
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-<<<<<<< Updated upstream
             weighted_sum = np.dot(normalized_rewards, noise_samples)
-=======
-            weighted_sum = np.dot(normalized_rewards,noise_samples)
->>>>>>> Stashed changes
 
         self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
             + (1. - 1./np.e) * self.moving_success_rate
