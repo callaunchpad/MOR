@@ -16,6 +16,15 @@ INVALID = 1
 GAME_OVER = 2
 SUCCESS = 3
 
+def approx_equal(a, b):
+    return abs(a - b) < 1e-5
+
+def validate_nn_outputs(output, debug=False):
+    if debug:
+        print output
+        print "Difference: " + str(1 - np.sum(output))
+    assert approx_equal(np.sum(output), 1)
+
 class EntES():
     """
     MaxEnt reward function.
@@ -57,17 +66,19 @@ class EntES():
         with tf.Session() as sess:
             reward = 0
             status = 0
-            for t in range(self.config['n_timesteps_per_trajectory']):
+            n = self.config['n_timesteps_per_trajectory']
+            for t in range(n):
                 # print "T: " + str(t)
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
-                # TEST COMPLETED: Input into NN is correct
+                # CORRECT: Test input into NN
                 # print np.matrix(self.env.interpret_inputs(inputs.flatten()))
-                # raw_input("Paused (enter to continue)...")
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
+                # CORRECT: Test net_outputs
+                validate_nn_outputs(net_output, debug=False)
+                # probs = np.exp(net_output[0]) / np.sum(np.exp(net_output[0]))
+                probs = net_output.flatten()
                 status = self.env.act(probs, population, sample_params, master)
-                reward += entropy(probs)/self.config['n_timesteps_per_trajectory'] \
-                    + 1/np.sqrt(self.lookup((self.env.current), counts))/self.config['n_timesteps_per_trajectory']
+                reward += entropy(probs)/n + 1/np.sqrt(self.lookup((self.env.current), counts))/n
                 this_counts[(self.env.current)] = self.lookup((self.env.current), this_counts, base=0) + 1
                 # counts[(self.env.current)] = self.lookup((self.env.current), counts) + 1/self.config['n_individuals']
                 if status != VALID:

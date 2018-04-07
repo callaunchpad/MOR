@@ -202,14 +202,14 @@ class MOGame(Environment):
 		#   = Valid
 		# L = Lava
 		# G = Goal
-		# time_score = self.score
+		time_score = self.score
 		died = self.status == GAME_OVER
-		# success = self.status == SUCCESS
+		success = self.status == SUCCESS
 		# # return [[time_score], [died], [success]]
 		# # return time_score
-		# distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
-		# return time_score, distance, died, success
-		return died
+		distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
+		return time_score, distance, died, success
+		# return died
 
 	def pre_processing(self):
 		"""
