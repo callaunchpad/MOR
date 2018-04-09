@@ -24,7 +24,7 @@ config:
 
   from_file: False
   params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
-  save_every: 20
+  save_every: 200
 
   visualize: True
   visualize_every: 200
