@@ -210,6 +210,7 @@ class MOGame(Environment):
 		distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
 		return time_score, distance, died, success
 		# return died
+		# return self.current, self.goal, True
 
 	def pre_processing(self):
 		"""

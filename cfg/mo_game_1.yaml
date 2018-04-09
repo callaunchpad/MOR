@@ -2,16 +2,16 @@ config:
   learning_rate: 0.2
   noise_std_dev: 0.4
   n_populations: 1000
-  n_individuals: 100
-  n_timesteps_per_trajectory: 200
+  n_individuals: 10
+  n_timesteps_per_trajectory: 40
   record_iterations: 50
 
-  algorithm: "EntES"
+  algorithm: "ES"
   environment: "MOGame"
-  environment_index: 1
+  environment_index: 0
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
-  MOR_flag: True
+  MOR_flag: False
   multiple_rewards: "mo_time_score, mo_death, mo_success"
   hidden_layer_activation: "selu"
   output_activation: "softmax"
@@ -19,7 +19,7 @@ config:
 
   n_hidden_layers: 1
   n_nodes_per_layer: 10
-  input_size: 1125
+  input_size: 500
   output_size: 5
 
   from_file: False
@@ -27,4 +27,4 @@ config:
   save_every: 20
 
   visualize: True
-  visualize_every: 100
+  visualize_every: 200

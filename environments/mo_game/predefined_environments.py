@@ -395,26 +395,48 @@ class Game(object):
 		pygame.display.flip()
 
 def get_easy_environment():
-	board = [['#','#','#','#','#','#'],
-			 ['#',' ','L','L','L','#'],
-			 ['#',' ','L','L','#','#'],
-			 ['#',' ',' ',' ','#','#'],
-			 ['#','#','L',' ','G','#'],
-			 ['#','#','#','#','#','#']]
+	# board = [['#','#','#','#','#','#'],
+	# 		 ['#',' ','L','L','L','#'],
+	# 		 ['#',' ','L','L','#','#'],
+	# 		 ['#',' ',' ',' ','#','#'],
+	# 		 ['#','#','L',' ','G','#'],
+	# 		 ['#','#','#','#','#','#']]
+	width, height = 10, 10
+	scale = 500//min(width, height)
+	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.9, 0.1, 0.0])
+	print "CURRENT: " + str(current)
+	print "GOAL: " + str(goal)
+	print(np.asmatrix(board))
 	score = 500
-	current = (1,1)
-	goal = (5,5)
+	# current = (1,1)
+	# goal = (5,5)
+
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 
-	game = Game(board, current, 100)
+	game = Game(board, current, scale)
 	assert valid(board, current)
 	return MOEnvironment(game, board, score, current, goal, types, flat_dim)
 
 def get_medium_environment():
-	width, height = 15, 15
+	width, height = 10, 10
 	scale = 500//min(width, height)
-	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.8, 0.1, 0.1])
+	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.7, 0.15, 0.15])
+	print "CURRENT: " + str(current)
+	print "GOAL: " + str(goal)
+	print(np.asmatrix(board))
+	score = 500
+	types = [' ', '#', 'L', 'G', 'A']
+	flat_dim = len(board) * len(board[0]) * len(types)
+
+	game = Game(board, current, scale)
+	assert valid(board, current)
+	return MOEnvironment(game, board, score, current, goal, types, flat_dim)
+
+def get_hard_environment():
+	width, height = 10, 10
+	scale = 500//min(width, height)
+	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.6, 0.2, 0.2])
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))

@@ -24,7 +24,7 @@ class ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
@@ -37,6 +37,8 @@ class ES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
+        self.visualize = self.config['visualize']
+        self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
@@ -59,6 +61,8 @@ class ES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
+                probs = net_output.flatten()
+                # print("probs [X,N,S,E,W]: ", probs)
                 status = self.env.act(probs, population, sample_params, master)
                 if status != VALID:
                     break
@@ -140,6 +144,7 @@ class ES():
             weighted_sum = sum(top_mu)
 
         else:
+            normalized_rewards = (rewards - np.mean(rewards))
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(normalized_rewards, noise_samples)
@@ -159,6 +164,8 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
+            self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             if self.MOR_flag:
