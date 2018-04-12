@@ -20,7 +20,7 @@ class CMA_ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])

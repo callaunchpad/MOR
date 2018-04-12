@@ -1,6 +1,6 @@
 import numpy as np
 import logging
-from abstract import Environment
+from ..abstract import Environment
 
 class Maze(Environment):
 
