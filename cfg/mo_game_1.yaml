@@ -6,7 +6,7 @@ config:
   n_timesteps_per_trajectory: 200
   record_iterations: 50
 
-  algorithm: "EntES"
+  algorithm: "ES"
   environment: "MOGame"
   environment_index: 1
   model: "FeedForwardNeuralNetwork"
