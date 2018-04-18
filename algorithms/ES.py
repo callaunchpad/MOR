@@ -24,7 +24,7 @@ class ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']], self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
@@ -37,6 +37,8 @@ class ES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
+        self.visualize = self.config['visualize']
+        self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
@@ -59,9 +61,11 @@ class ES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
+                probs = net_output.flatten()
                 status = self.env.act(probs, population, sample_params, master)
                 if status != VALID:
                     break
+            reward += self.reward(self.env.reward_params(valid))
             if (self.MOR_flag):
                 reward = [func(self.env.reward_params(status)) for func in self.multiple_rewards]
             else:
@@ -77,6 +81,9 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
+        normalized_rewards = (rewards - np.mean(rewards))
+        if np.std(rewards) != 0.0:
+            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
@@ -140,6 +147,7 @@ class ES():
             weighted_sum = sum(top_mu)
 
         else:
+            normalized_rewards = (rewards - np.mean(rewards))
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(normalized_rewards, noise_samples)
@@ -159,12 +167,11 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
+            self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
-            if self.MOR_flag:
-                rewards = np.zeros((self.config['n_individuals'], len(self.multiple_rewards)))
-            else:
-                rewards = np.zeros(self.config['n_individuals'])
+            rewards = [0]*self.config['n_individuals']
             n_individual_target_reached = 0
             self.run_simulation(self.master_params, model, p, master=True) # Run master params for progress check, not used for training
             for i in range(self.config['n_individuals']):
@@ -173,6 +180,7 @@ class ES():
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+            rewards = np.array(rewards)
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
