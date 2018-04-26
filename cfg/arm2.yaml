@@ -7,6 +7,7 @@ config:
   record_iterations: 50
   keep_rate: 0.8
 
+  algorithm: "ES"
   environment: "RobotArm"
   environment_index: 0
   model: "BatchNormalizationNeuralNetwork"
@@ -14,6 +15,7 @@ config:
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
+  multiple_rewards: False
 
   n_hidden_layers: 1
   n_nodes_per_layer: 10

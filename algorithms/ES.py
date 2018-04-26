@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from model.models import resolve_model
 from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
+from environments.mo_game import mo_game
 
 VALID = 0
 INVALID = 1
@@ -169,7 +170,8 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
-           # self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            if isinstance(self.env, mo_game.MOGame):
+                self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
