@@ -37,8 +37,8 @@ class ES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
-        self.visualize = self.config['visualize']
-        self.visualize_every = self.config['visualize_every']
+        #self.visualize = self.config['visualize']
+        #self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
@@ -168,7 +168,7 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
-            self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+            #self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))

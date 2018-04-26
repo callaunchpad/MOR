@@ -8,7 +8,7 @@ config:
 
   algorithm: "ES"
   environment: "MOGame"
-  environment_index: 0
+  environment_index: 2
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
   MOR_flag: False
