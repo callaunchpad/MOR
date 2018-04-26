@@ -9,7 +9,7 @@ config:
   algorithm: "ES"
   environment: "RobotArm"
   environment_index: 0
-  MOR_flag: False
+  MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
   multiple_rewards: "manhattan_distance, euclidean_distance"

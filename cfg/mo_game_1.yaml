@@ -11,7 +11,7 @@ config:
   environment_index: 2
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
-  MOR_flag: False
+  MOR_flag: True
   multiple_rewards: "mo_time_score, mo_death, mo_success"
   hidden_layer_activation: "selu"
   output_activation: "softmax"

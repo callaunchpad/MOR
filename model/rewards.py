@@ -18,12 +18,6 @@ def resolve_multiple_rewards(names):
 		functions[i] = resolve_reward(functions[i].strip())
 	return functions
 
-def resolve_multiple_rewards(names):
-	functions = names.split(",")
-	for i in range(len(functions)):
-		functions[i] = resolve_reward(functions[i].strip())
-	return functions
-
 def manhattan_distance(params):
 	"""
 	Manhattan distance from current position to target

@@ -38,9 +38,11 @@ class ES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
-        #self.visualize = self.config['visualize']
-        #self.visualize_every = self.config['visualize_every']
+        # self.visualize = self.config['visualize']
+        # self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
+        self.master_param_rewards = []
+        self.master_param_success = []
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
@@ -69,7 +71,7 @@ class ES():
                     break
             reward += self.reward(self.env.reward_params(valid))
             if (self.MOR_flag):
-                reward = [func(self.env.reward_params(status)) for func in self.multiple_rewards]
+                reward = [self.multiple_rewards[i](self.env.reward_params(status))[i] for i in range(len(self.multiple_rewards))]
             else:
                 reward = self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
@@ -83,13 +85,15 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = (rewards - np.mean(rewards))
-        if np.std(rewards) != 0.0:
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        #normalized_rewards = (rewards - np.mean(rewards))
+        #if np.std(rewards) != 0.0:
+        #    normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
+
+                print rewards
                 self.reward_mins[i] = min(self.reward_mins[i], min(reward))
                 self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
@@ -169,8 +173,8 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
-            if isinstance(self.env, mo_game.MOGame):
-                self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+        #    if isinstance(self.env, mo_game.MOGame):
+        #        self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
@@ -183,13 +187,18 @@ class ES():
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+            master_reward, master_success = self.run_simulation(self.master_params, model, p)
+            self.master_param_rewards += [master_reward]
+            self.master_param_success += [master_success]
             rewards = np.array(rewards)
             self.update(noise_samples, rewards, n_individual_target_reached)
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
-            #print(rewards)
-            #print(sum(rewards)/len(rewards))
-            self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
+            self.plot_graphs([range(p+1), range(p+1), range(p+1), range(p+1)], \
+             [population_rewards, n_reached_target, self.master_param_rewards, self.master_param_success], \
+             ["Average Reward per population", "Number of times target reached per Population", \
+             "Reward for Master Params", "Success for Master Params"], ["reward.png", "success.png", \
+             "master_reward.png", "master_success.png"], ["line", "scatter", "line", "scatter"])
             if (p % self.config['save_every'] == 0):
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
@@ -209,6 +218,6 @@ class ES():
                     plt.plot(x_axes[i], y_axes[i])
             if types[i] == "scatter":
                 plt.scatter(x_axes[i], y_axes[i])
-                plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
+                #plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
             plt.savefig(self.training_directory + filenames[i])
             plt.clf()
