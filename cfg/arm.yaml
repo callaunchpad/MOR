@@ -22,6 +22,8 @@ config:
   input_size: 7
   output_size: 3
 
+  visualize: False
+  visualize_every: 200
   from_file: False
   params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
   save_every: 20
