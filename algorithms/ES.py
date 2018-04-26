@@ -38,8 +38,8 @@ class ES():
         self.mu = self.config['n_individuals']/4
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
-        # self.visualize = self.config['visualize']
-        # self.visualize_every = self.config['visualize_every']
+        self.visualize = self.config['visualize']
+        self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
         self.master_param_rewards = []
         self.master_param_success = []
@@ -68,11 +68,12 @@ class ES():
                 status = self.env.act(probs, population, sample_params, master)
                 if status != VALID:
                     break
-            reward += self.reward(self.env.reward_params(valid))
+            # reward += self.reward(self.env.reward_params(valid))
             if (self.MOR_flag):
-                reward = [func(self.env.reward_params(status)) for func in self.multiple_rewards]
+                reward = [self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]
+                # print("REWARD:", reward)
             else:
-                reward = self.reward(self.env.reward_params(status))
+                reward += self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -84,13 +85,14 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
-        normalized_rewards = (rewards - np.mean(rewards))
-        if np.std(rewards) != 0.0:
-            normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        # normalized_rewards = (rewards - np.mean(rewards))
+        # if np.std(rewards) != 0.0:
+        #     normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
+                print(reward)
                 self.reward_mins[i] = min(self.reward_mins[i], min(reward))
                 self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
@@ -114,7 +116,9 @@ class ES():
                     ind_sample = noise_samples[ind]
                     comp_front = pareto_front.copy()
                     for comp in pareto_front.keys():
-                        sample, reward = comp_front[comp]
+                        # print("comp_front[comp]:", comp_front[comp])
+                        sample = comp
+                        reward = comp_front[comp]
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
