@@ -34,6 +34,7 @@ class CMA_ES():
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.cov = np.eye(len(self.master_params))
+        self.prev_cov = self.cov
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
@@ -139,13 +140,14 @@ class CMA_ES():
             top_mu = noise_samples
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-            weighted_sum = np.dot(noise_samples, normalized_rewards)
+            weighted_sum = np.dot(noise_samples.T, normalized_rewards)
 
         learning_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
         self.learning_rate *= learning_decay_rate
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
+        return top_mu
 
     def run(self):
         """
@@ -180,8 +182,9 @@ class CMA_ES():
                     if rewards[i] >= fourth:
                         previous_individuals += [noise_samples[i]]
                 previous_individuals = np.array(previous_individuals)
-                
-            self.cov = np.cov(previous_individuals.T)
+            self.cov = (1-self.config['cov_learning_rate'])*self.cov - self.config['cov_learning_rate']*np.cov(previous_individuals.T)
+            self.prev_cov = self.cov
+
 
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
@@ -199,6 +202,6 @@ class CMA_ES():
                 plt.plot(x_axes[i], y_axes[i])
             if types[i] == "scatter":
                 plt.scatter(x_axes[i], y_axes[i])
-                plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
+                #plt.plot(np.unique(x_axes[i]), np.poly1d(np.polyfit(x_axes[i], y_axes[i], 1))(np.unique(x_axes[i])), 'r--')
             plt.savefig(self.training_directory + filenames[i])
             plt.clf()
