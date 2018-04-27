@@ -195,6 +195,7 @@ class ES():
                 self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
+            np.random.seed()
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = [0]*self.config['n_individuals']
             n_individual_target_reached = 0
