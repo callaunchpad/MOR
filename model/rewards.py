@@ -77,4 +77,4 @@ def mo_death(params):
 
 def mo_success(params):
 	success = params
-	return success*100
+	return success*2

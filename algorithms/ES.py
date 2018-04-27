@@ -64,21 +64,24 @@ class ES():
             reward (float): Fitness function evaluated on the completed trajectory
         """
         with tf.Session() as sess:
-            reward = 0
+            if (self.MOR_flag):
+                reward = np.array([0] * len(self.multiple_rewards))
+                # print("REWARD:", reward)
+            else:
+                reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = net_output.flatten()
                 status = self.env.act(probs, population, sample_params, master)
+                if (self.MOR_flag):
+                    reward = np.add(reward, np.array([self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]))
+                    # print("REWARD:", reward)
+                else:
+                    reward += self.reward(self.env.reward_params(status))
                 if status != VALID:
                     break
-            # reward += self.reward(self.env.reward_params(valid))
-            if (self.MOR_flag):
-                reward = [self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]
-                # print("REWARD:", reward)
-            else:
-                reward += self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success

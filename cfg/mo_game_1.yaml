@@ -18,7 +18,7 @@ config:
   output_scale: 1
 
   n_hidden_layers: 1
-  n_nodes_per_layer: 10
+  n_nodes_per_layer: 200
   input_size: 500
   output_size: 5
 
@@ -27,4 +27,4 @@ config:
   save_every: 200
 
   visualize: True
-  visualize_every: 100
+  visualize_every: 50
