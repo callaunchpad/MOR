@@ -36,6 +36,7 @@ class ES():
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = self.config['n_individuals']/4
+        self.peel = self.config['peel']
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.visualize = self.config['visualize']
@@ -138,7 +139,10 @@ class ES():
                     if not dominated:
                         pareto_front[ind] = ind_reward
                         samples_left.remove(ind)
-
+                if not self.peel:
+                    top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
+                    pareto_front = {}
+                    break
 
             def crowding_distance(reward, front):
                 total = 0
@@ -158,10 +162,15 @@ class ES():
                         total += upper - lower
                 return total
 
+
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
+            normalized_rewards = (weighted_sum - np.mean(weighted_sum))
+            if np.std(weighted_sum) != 0.0:
+                normalized_rewards = (weighted_sum - np.mean(weighted_sum)) / np.std(weighted_sum)
+            weighted_sum = normalized_rewards
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
