@@ -394,7 +394,7 @@ class Game(object):
 			self.player.image.blit(text, [center_x, center_y])
 		pygame.display.flip()
 
-def get_easy_environment():
+def get_easy_environment(config):
 	# board = [['#','#','#','#','#','#'],
 	# 		 ['#',' ','L','L','L','#'],
 	# 		 ['#',' ','L','L','#','#'],
@@ -407,7 +407,7 @@ def get_easy_environment():
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
-	score = 500
+	score = config['n_timesteps_per_trajectory']
 	# current = (1,1)
 	# goal = (5,5)
 
@@ -418,14 +418,14 @@ def get_easy_environment():
 	assert valid(board, current)
 	return MOEnvironment(game, board, score, current, goal, types, flat_dim)
 
-def get_medium_environment():
+def get_medium_environment(config):
 	width, height = 10, 10
 	scale = 500//min(width, height)
 	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.7, 0.15, 0.15])
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
-	score = 500
+	score = config['n_timesteps_per_trajectory']
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 
@@ -433,14 +433,14 @@ def get_medium_environment():
 	assert valid(board, current)
 	return MOEnvironment(game, board, score, current, goal, types, flat_dim)
 
-def get_hard_environment():
+def get_hard_environment(config):
 	width, height = 10, 10
 	scale = 500//min(width, height)
 	board, current, goal = generate_test(width, height, [' ', '#', 'L'], [0.6, 0.2, 0.2])
 	print "CURRENT: " + str(current)
 	print "GOAL: " + str(goal)
 	print(np.asmatrix(board))
-	score = 500
+	score = config['n_timesteps_per_trajectory']
 	types = [' ', '#', 'L', 'G', 'A']
 	flat_dim = len(board) * len(board[0]) * len(types)
 

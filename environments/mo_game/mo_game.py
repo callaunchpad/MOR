@@ -207,8 +207,10 @@ class MOGame(Environment):
 		success = self.status == SUCCESS
 		# # return [[time_score], [died], [success]]
 		# # return time_score
-		distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
-		return time_score, distance, died, success
+		# distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
+		# return time_score, distance, died, success
+		# return time_score, (self.current, self.goal), died, success
+		return (self.current, self.goal), died, success
 		# return died
 		# return self.current, self.goal, True
 
