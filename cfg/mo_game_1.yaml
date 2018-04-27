@@ -1,14 +1,14 @@
 config:
-  learning_rate: 0.2
-  noise_std_dev: 0.4
+  learning_rate: 0.02
+  noise_std_dev: 0.2
   n_populations: 1000
-  n_individuals: 10
+  n_individuals: 50
   n_timesteps_per_trajectory: 40
   record_iterations: 50
 
   algorithm: "ES"
   environment: "MOGame"
-  environment_index: 0
+  environment_index: 1
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
   MOR_flag: True
@@ -27,4 +27,4 @@ config:
   save_every: 200
 
   visualize: True
-  visualize_every: 200
+  visualize_every: 100

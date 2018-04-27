@@ -25,7 +25,7 @@ class ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](config), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
@@ -46,8 +46,13 @@ class ES():
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
-        logging.info("\nReward:")
-        logging.info(inspect.getsource(self.reward) + "\n")
+        if self.MOR_flag:
+            logging.info("\nRewards:")
+            for reward in self.multiple_rewards:
+                logging.info(inspect.getsource(reward) + "\n")
+        else:
+            logging.info("\nReward:")
+            logging.info(inspect.getsource(self.reward) + "\n")
 
     def run_simulation(self, sample_params, model, population, master=False):
         """
@@ -92,7 +97,7 @@ class ES():
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
-                print(reward)
+                # print(reward)
                 self.reward_mins[i] = min(self.reward_mins[i], min(reward))
                 self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
@@ -189,6 +194,8 @@ class ES():
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
             master_reward, master_success = self.run_simulation(self.master_params, model, p)
+            if master_success:
+                self.model.save(self.model_save_directory, "success_params_" + str(p) + '.py', self.master_params)
             self.master_param_rewards += [master_reward]
             self.master_param_success += [master_success]
             rewards = np.array(rewards)
