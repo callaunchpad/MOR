@@ -46,7 +46,10 @@ def euclidean_distance(params):
 	current, target = params
 	# if not solution:
 	# 	return -100
-	return -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
+	max_dist = np.sqrt(2*10**2)
+	dist = -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
+	norm_dist = dist/max_dist
+	return norm_dist
 
 def binary(params):
 	current, target, solution = params
@@ -58,7 +61,11 @@ def binary(params):
 
 def mo_compound(params):
 	time_score, distance, died, success = params
-	return (-distance*time_score*(1-died*-1) + 7000)*.001
+	# return (-distance*time_score*(1-died*-1) + 7000)*.001
+	max_dist = np.sqrt(2*10**2)
+	max_time = 40
+	# print([-distance/max_dist, time_score/max_time, (1-died*-1)])
+	return -distance/max_dist + time_score/max_time + (1-died*-1)
 
 def mo_time_score(params):
 	score = params
@@ -70,4 +77,4 @@ def mo_death(params):
 
 def mo_success(params):
 	success = params
-	return success
+	return success*2
