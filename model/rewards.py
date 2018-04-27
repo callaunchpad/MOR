@@ -12,10 +12,18 @@ def resolve_reward(name):
 		"mo_compound": mo_compound
 	}
 	return rewards[name]
+# def resolve_multiple_rewards(names):
+# 	functions = names.split(",")
+# 	for i in range(len(functions)):
+# 		functions[i] = resolve_reward(functions[i].strip())
+# 	print("functions:", functions)
+# 	return functions
+
 def resolve_multiple_rewards(names):
 	functions = names.split(",")
 	for i in range(len(functions)):
 		functions[i] = resolve_reward(functions[i].strip())
+	# print("functions:", functions)
 	return functions
 
 def manhattan_distance(params):
@@ -35,9 +43,9 @@ def manhattan_distance(params):
 	return -dist + (100 * target_reached)
 
 def euclidean_distance(params):
-	current, target, solution = params
-	if not solution:
-		return -100
+	current, target = params
+	# if not solution:
+	# 	return -100
 	return -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
 
 def binary(params):
