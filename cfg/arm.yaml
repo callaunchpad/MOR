@@ -2,12 +2,13 @@ config:
   learning_rate: 0.2
   cov_learning_rate: 0.8
   noise_std_dev: 1.5
-  n_populations: 1000
-  n_individuals: 200
+  n_populations: 50
+  n_individuals: 50
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
   algorithm: "CMA_ES"
+  peel: 0
   environment: "RobotArm"
   environment_index: 1
   MOR_flag: True

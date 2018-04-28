@@ -202,7 +202,7 @@ class CMA_ES():
                     if rewards[i] >= fourth:
                         previous_individuals += [noise_samples[i]]
                 previous_individuals = np.array(previous_individuals)
-            self.cov = (1-self.config['cov_learning_rate'])*self.cov - self.config['cov_learning_rate']*np.cov(previous_individuals.T)
+            self.cov = (1-self.config['cov_learning_rate'])*self.cov + self.config['cov_learning_rate']*np.cov(previous_individuals.T)
             self.prev_cov = self.cov
             master_reward, master_success = self.run_simulation(self.master_params, model, p)
             self.master_param_rewards += [master_reward]
@@ -217,9 +217,9 @@ class CMA_ES():
             if (p % self.config['save_every'] == 0):
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
-        print(self.multiple_rewards)
+
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
-        return self.master_param_success
+        return self.master_param_success, population_rewards
 
     def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
         for i in range(len(x_axes)):

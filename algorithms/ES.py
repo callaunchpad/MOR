@@ -224,6 +224,7 @@ class ES():
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
+        return self.master_param_rewards, population_rewards
 
     def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
         for i in range(len(x_axes)):
