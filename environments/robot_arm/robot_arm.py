@@ -69,7 +69,7 @@ class RobotArm(Environment):
 		"""
 		Return the parameters for the proposed reward function
 		"""
-		params = [self.current, self.target, valid]
+		params = [self.current, self.target]
 		return params
 
 	def pre_processing(self):

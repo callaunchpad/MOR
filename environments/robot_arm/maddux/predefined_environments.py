@@ -7,7 +7,7 @@ from environment import Environment
 from objects import Ball, Obstacle, Target
 import numpy as np
 
-def get_empty_3dof_environment():
+def get_empty_3dof_environment(config):
     """An easy difficulty environment for planning tests with two obstacles,
     a ball as a target, and a simple human arm.
     """
@@ -20,7 +20,7 @@ def get_empty_3dof_environment():
                        static_objects=obstacles,
                        robot=robot)
 
-def get_easy_3dof_environment():
+def get_easy_3dof_environment(config):
     """An easy difficulty environment for planning tests with two obstacles,
     a ball as a target, and a simple human arm.
     """
@@ -34,7 +34,7 @@ def get_easy_3dof_environment():
                        static_objects=obstacles,
                        robot=robot)
 
-def get_easy_environment():
+def get_easy_environment(config):
     """An easy difficulty environment for planning tests with two obstacles,
     a ball as a target, and a simple human arm.
     """
@@ -49,7 +49,7 @@ def get_easy_environment():
                        robot=robot)
 
 
-def get_medium_environment():
+def get_medium_environment(config):
     """A medium difficulty environment for planning tests with two obstacles,
     a ball as a target, and a simple human arm.
     """
@@ -64,7 +64,7 @@ def get_medium_environment():
                        robot=robot)
 
 
-def get_hard_environment():
+def get_hard_environment(config):
     """A hard difficulty environment for planning tests with five obstacles,
     a ball as a target, and a simple human arm.
     """
@@ -82,7 +82,7 @@ def get_hard_environment():
                        robot=robot)
 
 
-def get_hard_environment_v2():
+def get_hard_environment_v2(config):
     """A very hard difficulty environment for planning tests with three
     obstacles, a ball as a target, and a simple human arm.
     """
@@ -98,7 +98,7 @@ def get_hard_environment_v2():
                        robot=robot)
 
 
-def get_noodle_environment():
+def get_noodle_environment(config):
     """An absurd environment for our noodle arm to do planning tests. It has
     five obstacles, a ball as a target, and our 10 link noodle arm
     """
@@ -118,7 +118,7 @@ def get_noodle_environment():
                        robot=robot)
 
 
-def get_tutorial_environment():
+def get_tutorial_environment(config):
     """Our environment from our documentation tutorial"""
     # Create an arm with a specific config and base position
     q0 = np.array([0.5, 0.2, 0, 0.5, 0, 0, 0])

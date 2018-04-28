@@ -46,12 +46,12 @@ def euclidean_distance(params):
 	current, target = params
 	# if not solution:
 	# 	return -100
-	max_dist = np.sqrt(2*10**2)
-	# dist = -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
-	dist = -np.sqrt( (current[0] - target[0])**2 + (current[1] - target[1])**2 )
-	norm_dist = dist/max_dist
+	# max_dist = np.sqrt(2*10**2)
+	dist = -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
+	# dist = -np.sqrt( (current[0] - target[0])**2 + (current[1] - target[1])**2 )
+	# norm_dist = dist/max_dist
 	# print("dist, max_dist, norm_dist:", (dist, max_dist, norm_dist))
-	return norm_dist
+	return dist
 
 def binary(params):
 	current, target, solution = params
