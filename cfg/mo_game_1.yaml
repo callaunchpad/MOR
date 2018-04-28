@@ -12,14 +12,14 @@ config:
   model: "FeedForwardNeuralNetwork"
   reward: "mo_compound"
   MOR_flag: True
-  multiple_rewards: "euclidean_distance, mo_death, mo_success"
+  multiple_rewards: "euclidean_distance, mo_success"
   hidden_layer_activation: "selu"
   output_activation: "softmax"
   output_scale: 1
   peel: True
 
   n_hidden_layers: 1
-  n_nodes_per_layer: 200
+  n_nodes_per_layer: 10
   input_size: 500
   output_size: 5
 
