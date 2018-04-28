@@ -149,6 +149,7 @@ class CMA_ES():
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
+            return noise_samples
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
@@ -156,8 +157,8 @@ class CMA_ES():
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(normalized_rewards, noise_samples)
 
-        self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
-            + (1. - 1./np.e) * self.moving_success_rate
+        # self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
+        #     + (1. - 1./np.e) * self.moving_success_rate
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
@@ -185,6 +186,7 @@ class CMA_ES():
                 rewards[i], success = self.run_simulation(sample_params, model, p)
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
+            master_reward, master_success = self.run_simulation(self.master_params, model, p)
             previous_individuals = self.update(noise_samples, rewards, n_individual_target_reached)
 
             if not self.MOR_flag:
@@ -198,8 +200,8 @@ class CMA_ES():
                 previous_individuals = np.array(previous_individuals)
             self.cov = (1-self.config['cov_learning_rate'])*self.cov + self.config['cov_learning_rate']*np.cov(previous_individuals.T)
             self.prev_cov = self.cov
-            master_reward, master_success = self.run_simulation(self.master_params, model, p)
             self.master_param_rewards += [master_reward]
+            logging.info("Master Reward: {}".format(master_reward))
             self.master_param_success += [master_success]
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
@@ -213,7 +215,7 @@ class CMA_ES():
         self.env.post_processing()
 
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
-        return self.master_param_success, population_rewards
+        return self.master_param_rewards, population_rewards
 
     def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
         for i in range(len(x_axes)):
