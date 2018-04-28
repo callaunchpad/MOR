@@ -164,11 +164,7 @@ class ES():
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
-            weighted_sum = sum(top_mu)*1.0/len(top_mu)
-            normalized_rewards = (weighted_sum - self.master_params)
-            if np.std(weighted_sum) != 0.0:
-                normalized_rewards = (weighted_sum - np.mean(weighted_sum)) / np.std(weighted_sum)
-            weighted_sum = normalized_rewards
+            weighted_sum = sum(top_mu)
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
