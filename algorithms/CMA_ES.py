@@ -20,11 +20,12 @@ class CMA_ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](config), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.MOR_flag = self.config['MOR_flag']
+        self.moving_success_rate = 0
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
             self.reward_mins = np.zeros(len(self.multiple_rewards))
@@ -58,9 +59,9 @@ class CMA_ES():
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output
+                action = net_output.flatten()
                 if self.env.discrete:
-                    action = np.argmax(net_output)
+                    action = np.argmax(action)
                 valid = self.env.act(action, population, sample_params, master)
             if (self.MOR_flag):
                 reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
@@ -161,7 +162,6 @@ class CMA_ES():
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-        return top_mu
 
     def run(self):
         """
@@ -198,7 +198,7 @@ class CMA_ES():
                 previous_individuals = np.array(previous_individuals)
             self.cov = (1-self.config['cov_learning_rate'])*self.cov - self.config['cov_learning_rate']*np.cov(previous_individuals.T)
             self.prev_cov = self.cov
-
+            master_reward, master_success = self.run_simulation(self.master_params, model, p)
             self.master_param_rewards += [master_reward]
             self.master_param_success += [master_success]
             n_reached_target.append(n_individual_target_reached)
