@@ -36,6 +36,7 @@ class ES():
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = self.config['n_individuals']/4
+        self.peel = self.config['peel']
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
         self.visualize = self.config['visualize']
@@ -64,21 +65,24 @@ class ES():
             reward (float): Fitness function evaluated on the completed trajectory
         """
         with tf.Session() as sess:
-            reward = 0
+            if (self.MOR_flag):
+                reward = np.array([0] * len(self.multiple_rewards))
+                # print("REWARD:", reward)
+            else:
+                reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
                 probs = net_output.flatten()
                 status = self.env.act(probs, population, sample_params, master)
+                if (self.MOR_flag):
+                    reward = np.add(reward, np.array([self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]))
+                    # print("REWARD:", reward)
+                else:
+                    reward += self.reward(self.env.reward_params(status))
                 if status != VALID:
                     break
-            # reward += self.reward(self.env.reward_params(valid))
-            if (self.MOR_flag):
-                reward = [self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]
-                # print("REWARD:", reward)
-            else:
-                reward += self.reward(self.env.reward_params(status))
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -133,7 +137,10 @@ class ES():
                     if not dominated:
                         pareto_front[ind] = ind_reward
                         samples_left.remove(ind)
-
+                if not self.peel:
+                    top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
+                    pareto_front = {}
+                    break
 
             def crowding_distance(reward, front):
                 total = 0
@@ -153,6 +160,7 @@ class ES():
                         total += upper - lower
                 return total
 
+
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
@@ -169,7 +177,9 @@ class ES():
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+        before_params = np.array(self.master_params).copy()
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
+        print("Diff:", self.master_params[:10] - before_params[:10])
 
     def run(self):
         """
@@ -183,6 +193,7 @@ class ES():
                 self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
+            np.random.seed()
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = [0]*self.config['n_individuals']
             n_individual_target_reached = 0
