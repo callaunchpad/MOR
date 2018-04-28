@@ -20,11 +20,12 @@ class CMA_ES():
         self.config = config
         self.training_directory = training_directory
         self.model_save_directory = self.training_directory + 'params/'
-        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](), self.training_directory, self.config)
+        self.env = resolve_env(self.config['environment'])(test_cases[self.config['environment']][self.config['environment_index']](config), self.training_directory, self.config)
         self.env.pre_processing()
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.MOR_flag = self.config['MOR_flag']
+        self.moving_success_rate = 0
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
             self.reward_mins = np.zeros(len(self.multiple_rewards))
@@ -35,6 +36,9 @@ class CMA_ES():
         self.noise_std_dev = self.config['noise_std_dev']
         self.cov = np.eye(len(self.master_params))
         self.prev_cov = self.cov
+        self.peel = self.config['peel']
+        self.master_param_rewards = []
+        self.master_param_success = []
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
@@ -51,19 +55,24 @@ class CMA_ES():
             reward (float): Fitness function evaluated on the completed trajectory
         """
         with tf.Session() as sess:
-            reward = 0
+            if (self.MOR_flag):
+                reward = np.array([0] * len(self.multiple_rewards))
+                # print("REWARD:", reward)
+            else:
+                reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output
-                if self.env.discrete:
-                    action = np.argmax(net_output)
-                valid = self.env.act(action, population, sample_params, master)
-            if (self.MOR_flag):
-                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
-            else:
-                reward = self.reward(self.env.reward_params(valid))
+                probs = net_output.flatten()
+                status = self.env.act(probs, population, sample_params, master)
+                if (self.MOR_flag):
+                    reward = np.add(reward, np.array([self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]))
+                    # print("REWARD:", reward)
+                else:
+                    reward += self.reward(self.env.reward_params(status))
+                #if status != valid:
+                #    break
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -75,10 +84,14 @@ class CMA_ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
+        # normalized_rewards = (rewards - np.mean(rewards))
+        # if np.std(rewards) != 0.0:
+        #     normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
                 reward = rewards[:,i]
+                # print(reward)
                 self.reward_mins[i] = min(self.reward_mins[i], min(reward))
                 self.reward_maxs[i] = max(self.reward_maxs[i], max(reward))
                 normalized_reward = (reward - np.mean(reward))
@@ -102,7 +115,9 @@ class CMA_ES():
                     ind_sample = noise_samples[ind]
                     comp_front = pareto_front.copy()
                     for comp in pareto_front.keys():
-                        sample, reward = comp_front[comp]
+                        # print("comp_front[comp]:", comp_front[comp])
+                        sample = comp
+                        reward = comp_front[comp]
                         if np.all(ind_reward <= reward) and np.any(ind_reward < reward):
                             dominated = True
                             break
@@ -112,7 +127,10 @@ class CMA_ES():
                     if not dominated:
                         pareto_front[ind] = ind_reward
                         samples_left.remove(ind)
-
+                if not self.peel:
+                    top_mu.extend([noise_samples[i] for i in pareto_front.keys()])
+                    pareto_front = {}
+                    break
 
             def crowding_distance(reward, front):
                 total = 0
@@ -132,22 +150,24 @@ class CMA_ES():
                         total += upper - lower
                 return total
 
-            tie_break = np.asarray([(sample, crowding_distance(reward, front)) for sample,reward in front.items()])
-            top_mu.extend(i[0] for i in tie_break[:self.mu - len(top_mu)])
+
+            tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
+            tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
+            top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
 
         else:
-            top_mu = noise_samples
+            normalized_rewards = (rewards - np.mean(rewards))
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
-            weighted_sum = np.dot(noise_samples.T, normalized_rewards)
+            weighted_sum = np.dot(normalized_rewards, noise_samples)
 
-        learning_decay_rate = 1.0 - np.sqrt((float(n_individual_target_reached)/float(self.config['n_individuals'])))
-        self.learning_rate *= learning_decay_rate
+        self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
+            + (1. - 1./np.e) * self.moving_success_rate
+        self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-        return top_mu
 
     def run(self):
         """
@@ -184,16 +204,22 @@ class CMA_ES():
                 previous_individuals = np.array(previous_individuals)
             self.cov = (1-self.config['cov_learning_rate'])*self.cov - self.config['cov_learning_rate']*np.cov(previous_individuals.T)
             self.prev_cov = self.cov
-
-
+            master_reward, master_success = self.run_simulation(self.master_params, model, p)
+            self.master_param_rewards += [master_reward]
+            self.master_param_success += [master_success]
             n_reached_target.append(n_individual_target_reached)
             population_rewards.append(sum(rewards)/len(rewards))
-            self.plot_graphs([range(p+1), range(p+1)], [population_rewards, n_reached_target], ["Average Reward per population", "Number of times target reached per Population"], ["reward.png", "success.png"], ["line", "scatter"])
+            self.plot_graphs([range(p+1), range(p+1), range(p+1), range(p+1)], \
+             [population_rewards, n_reached_target, self.master_param_rewards, self.master_param_success], \
+             ["Average Reward per population", "Number of times target reached per Population", \
+             "Reward for Master Params", "Success for Master Params"], ["reward.png", "success.png", \
+             "master_reward.png", "master_success.png"], ["line", "scatter", "line", "scatter"])
             if (p % self.config['save_every'] == 0):
                 self.model.save(self.model_save_directory, "params_" + str(p) + '.py', self.master_params)
         self.env.post_processing()
         print(self.multiple_rewards)
         logging.info("Reached Target {} Total Times".format(sum(n_reached_target)))
+        return self.master_param_success
 
     def plot_graphs(self, x_axes, y_axes, titles, filenames, types):
         for i in range(len(x_axes)):

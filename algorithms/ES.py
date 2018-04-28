@@ -111,7 +111,6 @@ class ES():
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
                 normalized_rewards[:,i] = normalized_reward
 
-
             top_mu = []
             pareto_front = {}
             samples_left = set(range(len(normalized_rewards)))
@@ -166,11 +165,7 @@ class ES():
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
-            weighted_sum = sum(top_mu)
-            normalized_rewards = (weighted_sum - np.mean(weighted_sum))
-            if np.std(weighted_sum) != 0.0:
-                normalized_rewards = (weighted_sum - np.mean(weighted_sum)) / np.std(weighted_sum)
-            weighted_sum = normalized_rewards
+            weighted_sum = np.array(top_mu).mean(0)
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
@@ -183,7 +178,10 @@ class ES():
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+        before_params = np.array(self.master_params).copy()
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
+        print("MP:", self.master_params[:10])
+        print("Diff:", self.master_params[:10] - before_params[:10])
 
     def run(self):
         """
@@ -197,6 +195,7 @@ class ES():
         #        self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
+            np.random.seed()
             noise_samples = np.random.randn(self.config['n_individuals'], len(self.master_params))
             rewards = [0]*self.config['n_individuals']
             n_individual_target_reached = 0

@@ -132,9 +132,9 @@ class MOGame(Environment):
 		self.current = next_loc
 		# print "NOW AT: " + str(next_loc)
 
-		if self.board[next_x][next_y] == 'L':
+		if self.board[self.current[0]][self.current[1]] == 'L':
 			self.status = GAME_OVER
-		elif self.board[next_x][next_y] == 'G':
+		elif self.board[self.current[0]][self.current[1]] == 'G':
 			self.status = SUCCESS
 		else:
 			self.status = VALID
@@ -210,7 +210,12 @@ class MOGame(Environment):
 		# distance = abs(self.current[0]-self.goal[0]) + abs(self.current[1]-self.goal[1])
 		# return time_score, distance, died, success
 		# return time_score, (self.current, self.goal), died, success
-		return (self.current, self.goal), died, success
+		e_dist = -np.sqrt( (self.current[0] -self.goal[0])**2 + (self.current[1] - self.goal[1])**2 )
+		assert(success == (self.current == self.goal))
+		assert(success == (e_dist == 0))
+		# print("CURRENT, GOAL, SUCCESS:", (self.current, self.goal, success))
+		# return (self.current, self.goal), died, success
+		return (self.current, self.goal), success
 		# return died
 		# return self.current, self.goal, True
 

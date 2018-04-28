@@ -1,18 +1,19 @@
 config:
   learning_rate: 0.2
+  cov_learning_rate: 0.8
   noise_std_dev: 1.5
   n_populations: 1000
   n_individuals: 200
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
-  algorithm: "ES"
+  algorithm: "CMA_ES"
   environment: "RobotArm"
   environment_index: 1
   MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
-  multiple_rewards: "manhattan_distance, euclidean_distance"
+  multiple_rewards: "euclidean_distance, collision"
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
@@ -30,3 +31,4 @@ config:
 
   visualize: False
   visualize_every: 200
+  peel: True

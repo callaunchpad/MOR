@@ -9,7 +9,8 @@ def resolve_reward(name):
 		"mo_time_score": mo_time_score,
 		"mo_death": mo_death,
 		"mo_success": mo_success,
-		"mo_compound": mo_compound
+		"mo_compound": mo_compound,
+		"collision": collision
 	}
 	return rewards[name]
 # def resolve_multiple_rewards(names):
@@ -46,10 +47,37 @@ def euclidean_distance(params):
 	current, target = params
 	# if not solution:
 	# 	return -100
-	max_dist = np.sqrt(2*10**2)
+	# max_dist = np.sqrt(2*10**2)
 	dist = -np.linalg.norm(np.subtract(np.array(current), np.array(target)))
-	norm_dist = dist/max_dist
-	return norm_dist
+	# dist = -np.sqrt( (current[0] - target[0])**2 + (current[1] - target[1])**2 )
+	# norm_dist = dist/max_dist
+	# print("dist, max_dist, norm_dist:", (dist, max_dist, norm_dist))
+	return dist
+
+def collision(params):
+	def is_inside(current, obstacle):
+		""" 
+		Returns whether current is inside obstacle
+		"""
+		a = obstacle.pt1
+		b = obstacle.pt2
+		num_total = 0
+		if current[0] in range(int(math.floor(min(a[0], b[0]))), int(math.ceil(max(a[0], b[0]) + 1))):
+			num_total += 1
+		if current[1] in range(int(math.floor(min(a[1], b[1]))), int(math.ceil(max(a[1], b[1]) + 1))):
+			num_total += 1
+		if current[2] in range(int(math.floor(min(a[2], b[2]))), int(math.ceil(max(a[2], b[2]) + 1))):
+			num_total += 1
+		if num_total == 3:
+			return True
+		return False
+		
+
+	(current, obstacles) = params
+	for obstacle in obstacles:
+		if is_inside(current, obstacle):
+			return -50
+	return -1
 
 def binary(params):
 	current, target, solution = params
