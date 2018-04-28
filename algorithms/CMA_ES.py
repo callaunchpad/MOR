@@ -169,6 +169,8 @@ class CMA_ES():
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
 
+        return noise_samples
+
     def run(self):
         """
         Run NES algorithm given parameters from config.
@@ -192,6 +194,7 @@ class CMA_ES():
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
             previous_individuals = self.update(noise_samples, rewards, n_individual_target_reached)
+            print previous_individuals
 
             if not self.MOR_flag:
                 copy = rewards.copy()
