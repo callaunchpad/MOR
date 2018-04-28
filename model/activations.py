@@ -7,7 +7,9 @@ class Activations():
 			"none": self.constant,
 			"selu": self.selu,
 			"tanh": self.tanh,
-			"softmax": self.softmax
+			"softmax": self.softmax,
+			"relu": self.relu,
+			"elu": self.elu
 		}
 
 	def resolve_activation(self, name):
@@ -29,6 +31,12 @@ class Activations():
 
 	def tanh(self, x):
 		return tf.nn.tanh(x)
+
+	def elu(self, x):
+		return tf.nn.elu(x)
+
+	def relu(self, x):
+		return tf.nn.relu(x)
 
 	def softmax(self, x):
 		return tf.nn.softmax(x)
