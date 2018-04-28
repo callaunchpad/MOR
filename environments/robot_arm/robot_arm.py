@@ -37,6 +37,7 @@ class RobotArm(Environment):
 		past = self.current
 		self.current = location[0]
 		if population % self.config['record_iterations'] == 0 and master:
+			print("Recording")
 			try:
 				self.arm.ikine(location[0])
 				timestamp = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
