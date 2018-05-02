@@ -6,6 +6,9 @@ import warnings
 import argparse
 import numpy as np
 import tensorflow as tf
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 from shutil import copyfile, rmtree
 from datetime import datetime
 from cfg.config import Config
@@ -13,6 +16,7 @@ from algorithms.NES import NES
 from algorithms.ES import ES
 from algorithms.entropy_ES import EntES
 from algorithms.CMA_ES import CMA_ES
+import matplotlib.pyplot as plt
 
 def config(log_file):
 	logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(message)s')
@@ -70,11 +74,13 @@ if __name__ == "__main__":
 		# print("Check {} for progress".format(log_file))
 		# cma_master, cma_popl = CMA_ES(training_directory, config).run()
 		# es_master, es_popl = ES(training_directory, config).run()
+		# plt.title("CMA-ES vs ES: Master Rewards")
 		# plt.plot(range(len(cma_master)), cma_master, color="red", label="CMA-ES")
 		# plt.plot(range(len(es_master)), es_master, color="green", label="ES")
 		# plt.legend()
 		# plt.savefig(training_directory + "test-master.png")
 		# plt.clf()
+		# plt.title("CMA-ES vs ES: Population Rewards")
 		# plt.plot(range(len(cma_popl)), cma_popl, color="red", label="CMA-ES")
 		# plt.plot(range(len(es_popl)), es_popl, color="green", label="ES")
 		# plt.legend()

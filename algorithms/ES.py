@@ -64,6 +64,7 @@ class ES():
         Returns:
             reward (float): Fitness function evaluated on the completed trajectory
         """
+
         with tf.Session() as sess:
             if (self.MOR_flag):
                 reward = np.array([0] * len(self.multiple_rewards))
@@ -94,6 +95,7 @@ class ES():
             noise_samples (float array): List of the noise samples for each individual in the population
             rewards (float array): List of rewards for each individual in the population
         """
+
         # normalized_rewards = (rewards - np.mean(rewards))
         # if np.std(rewards) != 0.0:
         #     normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
@@ -189,8 +191,8 @@ class ES():
         n_reached_target = []
         population_rewards = []
         for p in range(self.config['n_populations']):
-            if isinstance(self.env, mo_game.MOGame):
-                self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
+        #    if isinstance(self.env, mo_game.MOGame):
+        #        self.env.toggle_viz(True) if (self.visualize and p%self.visualize_every == 0) else self.env.toggle_viz(False)
             self.env.pre_processing()
             logging.info("Population: {}\n{}".format(p+1, "="*30))
             np.random.seed()

@@ -18,6 +18,7 @@ class RobotArm(Environment):
 		self.current = self.arm.end_effector_position()
 		self.ball = self.env.dynamic_objects[0]
 		self.target = self.ball.position
+		self.static_objects = self.env.static_objects
 		# self.recording_queue = []
 		logging.info("Robot Arm: End effector starts at {}".format(self.current))
 		logging.info("Target: Ball at {}".format(self.target))
@@ -35,11 +36,11 @@ class RobotArm(Environment):
 		"""
 		valid = True
 		past = self.current
-		self.current = location[0]
+		self.current = location
 		if population % self.config['record_iterations'] == 0 and master:
 			print("Recording")
 			try:
-				self.arm.ikine(location[0])
+				self.arm.ikine(location)
 				timestamp = datetime.now().strftime("%m-%d-%Y_%H-%M-%S")
 				training_path = self.training_directory + "/records/"
 				try:
@@ -70,7 +71,8 @@ class RobotArm(Environment):
 		"""
 		Return the parameters for the proposed reward function
 		"""
-		params = [self.current, self.target]
+		# params = [(self.current, self.target), (self.current, self.static_objects)]
+		params = (self.current, self.target)
 		return params
 
 	def pre_processing(self):
