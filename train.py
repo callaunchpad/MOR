@@ -55,31 +55,31 @@ if __name__ == "__main__":
 	copyfile(config_path, training_directory + timestamp + ".yaml")
 
 	try:
-		# set_seeds(0)
-		# config = Config(config_path).config
-		# algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES, "EntES": EntES}
-		# algorithm = algorithms[config['algorithm']](training_directory, config)
-		# print("Running %s Algorithm..." % (config['algorithm']))
-		# print("Check {} for progress".format(log_file))
-		# algorithm.run()
 		set_seeds(0)
 		config = Config(config_path).config
 		algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES, "EntES": EntES}
 		algorithm = algorithms[config['algorithm']](training_directory, config)
 		print("Running %s Algorithm..." % (config['algorithm']))
 		print("Check {} for progress".format(log_file))
-		cma_master, cma_popl = CMA_ES(training_directory, config).run()
-		es_master, es_popl = ES(training_directory, config).run()
-		plt.plot(range(len(cma_master)), cma_master, color="red", label="CMA-ES")
-		plt.plot(range(len(es_master)), es_master, color="green", label="ES")
-		plt.legend()
-		plt.savefig(training_directory + "test-master.png")
-		plt.clf()
-		plt.plot(range(len(cma_popl)), cma_popl, color="red", label="CMA-ES")
-		plt.plot(range(len(es_popl)), es_popl, color="green", label="ES")
-		plt.legend()
-		plt.savefig(training_directory + "test-population.png")
-		plt.clf()
+		algorithm.run()
+		# set_seeds(0)
+		# config = Config(config_path).config
+		# algorithms = {"CMA_ES": CMA_ES, "ES": ES, "NES": NES, "EntES": EntES}
+		# algorithm = algorithms[config['algorithm']](training_directory, config)
+		# print("Running %s Algorithm..." % (config['algorithm']))
+		# print("Check {} for progress".format(log_file))
+		# cma_master, cma_popl = CMA_ES(training_directory, config).run()
+		# es_master, es_popl = ES(training_directory, config).run()
+		# plt.plot(range(len(cma_master)), cma_master, color="red", label="CMA-ES")
+		# plt.plot(range(len(es_master)), es_master, color="green", label="ES")
+		# plt.legend()
+		# plt.savefig(training_directory + "test-master.png")
+		# plt.clf()
+		# plt.plot(range(len(cma_popl)), cma_popl, color="red", label="CMA-ES")
+		# plt.plot(range(len(es_popl)), es_popl, color="green", label="ES")
+		# plt.legend()
+		# plt.savefig(training_directory + "test-population.png")
+		# plt.clf()
 	except KeyboardInterrupt:
 		if args.d:
 			print("\nDeleted: {}".format(training_directory))

@@ -81,6 +81,7 @@ class CMA_ES():
         # normalized_rewards = (rewards - np.mean(rewards))
         # if np.std(rewards) != 0.0:
         #     normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        top_mu = []
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
@@ -94,7 +95,7 @@ class CMA_ES():
                 normalized_rewards[:,i] = normalized_reward
 
 
-            top_mu = []
+
             pareto_front = {}
             samples_left = set(range(len(normalized_rewards)))
 
@@ -149,13 +150,14 @@ class CMA_ES():
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
             weighted_sum = sum(top_mu)
-            return noise_samples
+
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(normalized_rewards, noise_samples)
+            top_mu = noise_samples
 
         # self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
         #     + (1. - 1./np.e) * self.moving_success_rate
@@ -163,7 +165,7 @@ class CMA_ES():
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-
+        return top_mu
     def run(self):
         """
         Run NES algorithm given parameters from config.

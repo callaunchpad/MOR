@@ -1,6 +1,6 @@
 config:
   learning_rate: 0.2
-  cov_learning_rate: 0.8
+  cov_learning_rate: 0.5
   noise_std_dev: 1.5
   n_populations: 50
   n_individuals: 50
