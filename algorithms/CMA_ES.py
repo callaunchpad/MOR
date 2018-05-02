@@ -111,7 +111,6 @@ class CMA_ES():
                     normalized_reward = (reward - np.mean(reward)) / np.std(reward)
                 normalized_rewards[:,i] = normalized_reward
 
-
             pareto_front = {}
             samples_left = set(range(len(normalized_rewards)))
 
@@ -165,7 +164,7 @@ class CMA_ES():
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
-            weighted_sum = np.array(top_mu).mean(0)
+            weighted_sum = sum(top_mu)
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
@@ -181,7 +180,6 @@ class CMA_ES():
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         before_params = np.array(self.master_params).copy()
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-
         return top_mu
 
     def run(self):
