@@ -1,9 +1,9 @@
 config:
   learning_rate: 0.2
-  cov_learning_rate: 0.8
+  cov_learning_rate: 0.5
   noise_std_dev: 1.5
-  n_populations: 50
-  n_individuals: 50
+  n_populations: 500
+  n_individuals: 200
   n_timesteps_per_trajectory: 1
   record_iterations: 50
 
@@ -27,5 +27,5 @@ config:
   visualize: False
   visualize_every: 200
   from_file: False
-  params_file: 'ext/02-21-2018_18-14-54/params/params_0.py'
+  params_file: 'ext/04-27-2018_21-09-04/params/params_180.py'
   save_every: 20

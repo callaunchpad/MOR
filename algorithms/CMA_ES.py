@@ -10,6 +10,10 @@ from model.models import resolve_model
 from model.rewards import resolve_reward, resolve_multiple_rewards
 from environments.env import test_cases, resolve_env
 
+VALID = 0
+INVALID = 1
+GAME_OVER = 2
+SUCCESS = 3
 
 class CMA_ES():
     """
@@ -25,24 +29,32 @@ class CMA_ES():
         self.model = resolve_model(self.config['model'])(self.config)
         self.reward = resolve_reward(self.config['reward'])
         self.MOR_flag = self.config['MOR_flag']
-        self.moving_success_rate = 0
         if (self.MOR_flag):
             self.multiple_rewards = resolve_multiple_rewards(self.config['multiple_rewards'])
             self.reward_mins = np.zeros(len(self.multiple_rewards))
             self.reward_maxs = np.zeros(len(self.multiple_rewards))
         self.master_params = self.model.init_master_params(self.config['from_file'], self.config['params_file'])
         self.mu = self.config['n_individuals']/4
+        self.peel = self.config['peel']
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
-        self.cov = np.eye(len(self.master_params))
-        self.prev_cov = self.cov
+        self.visualize = self.config['visualize']
+        self.visualize_every = self.config['visualize_every']
+        self.moving_success_rate = 0
         self.master_param_rewards = []
         self.master_param_success = []
         if (self.config['from_file']):
             logging.info("\nLoaded Master Params from:")
             logging.info(self.config['params_file'])
+        if self.MOR_flag:
+            logging.info("\nRewards:")
+            for reward in self.multiple_rewards:
+                logging.info(inspect.getsource(reward) + "\n")
+        else:
             logging.info("\nReward:")
-        logging.info(inspect.getsource(self.reward) + "\n")
+            logging.info(inspect.getsource(self.reward) + "\n")
+        self.cov = np.eye(len(self.master_params))
+        self.prev_cov = self.cov
 
     def run_simulation(self, sample_params, model, population, master=False):
         """
@@ -54,19 +66,24 @@ class CMA_ES():
             reward (float): Fitness function evaluated on the completed trajectory
         """
         with tf.Session() as sess:
-            reward = 0
+            if (self.MOR_flag):
+                reward = np.array([0] * len(self.multiple_rewards))
+                # print("REWARD:", reward)
+            else:
+                reward = 0
             valid = False
             for t in range(self.config['n_timesteps_per_trajectory']):
                 inputs = np.array(self.env.inputs(t)).reshape((1, self.config['input_size']))
                 net_output = sess.run(model, self.model.feed_dict(inputs, sample_params))
-                action = net_output.flatten()
-                if self.env.discrete:
-                    action = np.argmax(action)
-                valid = self.env.act(action, population, sample_params, master)
-            if (self.MOR_flag):
-                reward = [func(self.env.reward_params(valid)) for func in self.multiple_rewards]
-            else:
-                reward = self.reward(self.env.reward_params(valid))
+                probs = net_output.flatten()
+                status = self.env.act(probs, population, sample_params, master)
+                if (self.MOR_flag):
+                    reward = np.add(reward, np.array([self.multiple_rewards[i](self.env.reward_params(status)[i]) for i in range(len(self.multiple_rewards))]))
+                    # print("REWARD:", reward)
+                else:
+                    reward += self.reward(self.env.reward_params(status))
+                if status != VALID:
+                    break
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -81,6 +98,7 @@ class CMA_ES():
         # normalized_rewards = (rewards - np.mean(rewards))
         # if np.std(rewards) != 0.0:
         #     normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
+        top_mu = []
         if self.MOR_flag:
             normalized_rewards = np.zeros((len(rewards), len(rewards[0])))
             for i in range(len(rewards[0])):
@@ -94,7 +112,6 @@ class CMA_ES():
                 normalized_rewards[:,i] = normalized_reward
 
 
-            top_mu = []
             pareto_front = {}
             samples_left = set(range(len(normalized_rewards)))
 
@@ -148,22 +165,23 @@ class CMA_ES():
             tie_break = [(noise_samples[ind], crowding_distance(reward, pareto_front)) for ind,reward in pareto_front.items()]
             tie_break = sorted(tie_break, key = lambda x: x[1], reverse = True)
             top_mu.extend(i[0] for i in tie_break[:int(self.mu - len(top_mu))])
-            weighted_sum = sum(top_mu)
-            return noise_samples
+            weighted_sum = np.array(top_mu).mean(0)
 
         else:
             normalized_rewards = (rewards - np.mean(rewards))
             if np.std(rewards) != 0.0:
                 normalized_rewards = (rewards - np.mean(rewards)) / np.std(rewards)
             weighted_sum = np.dot(normalized_rewards, noise_samples)
+            top_mu = noise_samples
 
-        # self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
-        #     + (1. - 1./np.e) * self.moving_success_rate
+        self.moving_success_rate = 1./np.e * float(n_individual_target_reached) / float(self.config['n_individuals']) \
+            + (1. - 1./np.e) * self.moving_success_rate
         self.learning_rate = self.config['learning_rate'] * (1 - self.moving_success_rate)
         logging.info("Learning Rate: {}".format(self.learning_rate))
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
+        before_params = np.array(self.master_params).copy()
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-
+        return top_mu
     def run(self):
         """
         Run NES algorithm given parameters from config.
@@ -188,8 +206,7 @@ class CMA_ES():
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
             master_reward, master_success = self.run_simulation(self.master_params, model, p)
             previous_individuals = self.update(noise_samples, rewards, n_individual_target_reached)
-
-            if not self.MOR_flag:
+            if self.MOR_flag:
                 copy = rewards.copy()
                 copy.sort()
                 fourth = copy[self.config['n_individuals']*3/4]
@@ -198,6 +215,10 @@ class CMA_ES():
                     if rewards[i] >= fourth:
                         previous_individuals += [noise_samples[i]]
                 previous_individuals = np.array(previous_individuals)
+            # else:
+            #     cutoff = len(previous_individuals)*3/4
+            #     previous_individuals = [:cutoff]
+
             self.cov = (1-self.config['cov_learning_rate'])*self.cov + self.config['cov_learning_rate']*np.cov(previous_individuals.T)
             self.prev_cov = self.cov
             self.master_param_rewards += [master_reward]
