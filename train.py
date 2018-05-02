@@ -16,6 +16,7 @@ from algorithms.NES import NES
 from algorithms.ES import ES
 from algorithms.entropy_ES import EntES
 from algorithms.CMA_ES import CMA_ES
+import matplotlib.pyplot as plt
 
 def config(log_file):
 	logging.basicConfig(filename=log_file, level=logging.DEBUG, format='%(message)s')

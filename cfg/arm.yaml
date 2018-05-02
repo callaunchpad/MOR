@@ -10,11 +10,11 @@ config:
   algorithm: "CMA_ES"
   peel: 0
   environment: "RobotArm"
-  environment_index: 0
-  MOR_flag: False
+  environment_index: 1
+  MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
-  multiple_rewards: "manhattan_distance, euclidean_distance"
+  multiple_rewards: "euclidean_distance, collision"
   hidden_layer_activation: "selu"
   output_activation: "none"
   output_scale: 3
@@ -29,3 +29,6 @@ config:
   from_file: False
   params_file: 'ext/04-27-2018_21-09-04/params/params_180.py'
   save_every: 20
+
+  visualize: False
+  visualize_every: 200
