@@ -10,8 +10,8 @@ config:
   algorithm: "CMA_ES"
   peel: 0
   environment: "RobotArm"
-  environment_index: 1
-  MOR_flag: True
+  environment_index: 0
+  MOR_flag: False
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
   multiple_rewards: "euclidean_distance, collision"

@@ -38,15 +38,9 @@ class CMA_ES():
         self.peel = self.config['peel']
         self.learning_rate = self.config['learning_rate']
         self.noise_std_dev = self.config['noise_std_dev']
-<<<<<<< HEAD
         self.visualize = self.config['visualize']
         self.visualize_every = self.config['visualize_every']
         self.moving_success_rate = 0
-=======
-        self.cov = np.eye(len(self.master_params))
-        self.prev_cov = self.cov
-        self.peel = self.config['peel']
->>>>>>> f65c573563dc2f64d9395a118b85e43c30d49a7a
         self.master_param_rewards = []
         self.master_param_success = []
         if (self.config['from_file']):
@@ -88,13 +82,8 @@ class CMA_ES():
                     # print("REWARD:", reward)
                 else:
                     reward += self.reward(self.env.reward_params(status))
-<<<<<<< HEAD
                 if status != VALID:
                     break
-=======
-                #if status != valid:
-                #    break
->>>>>>> f65c573563dc2f64d9395a118b85e43c30d49a7a
             success = self.env.reached_target()
             self.env.reset()
             return reward, success
@@ -192,13 +181,9 @@ class CMA_ES():
         logging.info("Noise Std Dev: {}".format(self.noise_std_dev))
         before_params = np.array(self.master_params).copy()
         self.master_params += (self.learning_rate / (self.config['n_individuals'] * self.noise_std_dev)) * weighted_sum
-<<<<<<< HEAD
+
         return top_mu
-=======
 
-        return noise_samples
-
->>>>>>> f65c573563dc2f64d9395a118b85e43c30d49a7a
     def run(self):
         """
         Run NES algorithm given parameters from config.
@@ -222,14 +207,10 @@ class CMA_ES():
                 n_individual_target_reached += success
                 logging.info("Individual {} Reward: {}\n".format(i+1, rewards[i]))
             master_reward, master_success = self.run_simulation(self.master_params, model, p)
+            if master_success:
+                self.model.save(self.model_save_directory, "success_params_" + str(p) + '.py', self.master_params)
             previous_individuals = self.update(noise_samples, rewards, n_individual_target_reached)
-<<<<<<< HEAD
             if self.MOR_flag:
-=======
-            print previous_individuals
-
-            if not self.MOR_flag:
->>>>>>> f65c573563dc2f64d9395a118b85e43c30d49a7a
                 copy = rewards.copy()
                 copy.sort()
                 fourth = copy[self.config['n_individuals']*3/4]
