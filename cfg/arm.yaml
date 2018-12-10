@@ -2,7 +2,7 @@ config:
   learning_rate: 0.2
   cov_learning_rate: 0.5
   noise_std_dev: 1.5
-  n_populations: 50
+  n_populations: 200
   n_individuals: 50
   n_timesteps_per_trajectory: 1
   record_iterations: 50
@@ -11,7 +11,7 @@ config:
   peel: 0
   environment: "RobotArm"
   environment_index: 0
-  MOR_flag: False
+  MOR_flag: True
   model: "FeedForwardNeuralNetwork"
   reward: "euclidean_distance"
   multiple_rewards: "manhattan_distance, euclidean_distance"
